@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# C / compiled files
+*.o
+*.a
+*.so
+*.out
+*.bin
+
+# Build directories
+build/
+dist/
+
+# Raspberry Pi / temporary files
+*.swp
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
