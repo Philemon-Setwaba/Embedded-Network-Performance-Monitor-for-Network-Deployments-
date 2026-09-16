@@ -283,7 +283,7 @@ if __name__ == "__main__":
     # The deployment interval is 30 seconds by default.
     poller = SNMPPoller(
         target="127.0.0.1",
-        if_index=1,
+        if_index=2,
     )
 
     poller.run_continuous(
