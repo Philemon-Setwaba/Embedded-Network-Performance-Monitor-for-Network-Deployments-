@@ -1,5 +1,5 @@
 """
-src/measurement/active.py
+src/measurement/ping.py
 
 Active measurement: round-trip latency and reachability via ICMP ping.
 
@@ -75,6 +75,16 @@ class PingMeasurer:
     """
 
     def __init__(self, target: str, timeout_s: float = DEFAULT_TIMEOUT_S):
+        # iputils ping treats `-W 0` as an infinite wait (see `man ping`),
+        # so a timeout of 0 or less is rejected at start-up rather than
+        # silently causing every measurement to hang until the Python
+        # safety timeout stops it.
+        if timeout_s <= 0:
+            raise ValueError(
+                "timeout_s must be greater than 0 "
+                "(ping treats -W 0 as an infinite wait)"
+            )
+
         self.target = target
         self.timeout_s = timeout_s
 
@@ -157,12 +167,13 @@ class PingMeasurer:
         """
 
         # `-W` tells ping how many seconds to wait for a reply before
-        # considering the ping unsuccessful. It uses whole seconds, so
-        # values below 1 second become 0 when converted with int().
+        # considering the ping unsuccessful. iputils ping accepts decimal
+        # values (e.g. 0.5), and 0 means wait forever (see `man ping`),
+        # so the timeout is passed as-is rather than rounded to an int.
         # The Python timeout provides a second safety limit and stops the
         # ping process if it takes too long to finish.
 
-        ping_wait_s = str(int(self.timeout_s))
+        ping_wait_s = f"{self.timeout_s:g}"
         subprocess_timeout_s = self.timeout_s + SUBPROCESS_TIMEOUT_MARGIN_S
 
         try:
