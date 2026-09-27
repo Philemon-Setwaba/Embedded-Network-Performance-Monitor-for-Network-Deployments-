@@ -18,7 +18,7 @@ import re
 import subprocess
 import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -42,6 +42,17 @@ SUBPROCESS_TIMEOUT_MARGIN_S = 1.0
 LOSS_PCT_ON_FAILURE = 100.0
 LOSS_PCT_ON_SUCCESS = 0.0
 
+# Reasons a measurement can fail, stored in PingResult.error.
+# iputils ping exits with 1 when no reply is received and 2 for other
+# errors (e.g. unknown host, network unreachable), see `man ping`.
+ERROR_NO_REPLY = "no_reply"        # ping exit code 1: sent, but no reply
+ERROR_PING_ERROR = "ping_error"    # ping exit code 2 (or other non-zero)
+ERROR_TIMEOUT = "timeout"          # ping did not finish; Python stopped it
+ERROR_NO_RTT = "no_rtt"            # exit code 0, but no RTT in the output
+ERROR_EXEC_FAILED = "exec_failed"  # ping could not be started at all
+
+PING_EXIT_NO_REPLY = 1
+
 
 # ---------------------------------------------------------------------------
 # PING OUTPUT PARSING
@@ -61,6 +72,14 @@ class PingResult:
     reachable: bool
     rtt_ms: Optional[float]
     loss_pct: float
+
+    # Why the measurement failed. None when the target replied.
+    # One of the ERROR_* values defined above.
+    error: Optional[str] = None
+
+    # Extra detail for diagnosis, e.g. ping's own error message such as
+    # "ping: connect: Network is unreachable". None when not available.
+    error_detail: Optional[str] = None
 
 
 class PingMeasurer:
@@ -97,15 +116,15 @@ class PingMeasurer:
 
         timestamp = self._now_utc_iso()
 
-        stdout = self._run_ping_subprocess()
+        stdout, error, error_detail = self._run_ping_subprocess()
 
-        if stdout is None:
-            return self._failed_result(timestamp)
+        if error is not None:
+            return self._failed_result(timestamp, error, error_detail)
 
         rtt_ms = self._extract_rtt_ms(stdout)
 
         if rtt_ms is None:
-            return self._failed_result(timestamp)
+            return self._failed_result(timestamp, ERROR_NO_RTT, None)
 
         return PingResult(
             timestamp=timestamp,
@@ -158,12 +177,16 @@ class PingMeasurer:
         """Return the current UTC time in ISO 8601 format."""
         return datetime.now(timezone.utc).isoformat()
 
-    def _run_ping_subprocess(self) -> Optional[str]:
+    def _run_ping_subprocess(
+        self,
+    ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
         """
         Run the system ping command.
 
         Returns:
-            ping stdout if the command succeeds, otherwise None.
+            (stdout, error, error_detail)
+            - On success: (ping stdout, None, None)
+            - On failure: (None, one of the ERROR_* values, detail or None)
         """
 
         # `-W` tells ping how many seconds to wait for a reply before
@@ -191,12 +214,20 @@ class PingMeasurer:
                 timeout=subprocess_timeout_s,
             )
         except subprocess.TimeoutExpired:
-            return None
+            return None, ERROR_TIMEOUT, None
+        except OSError as exc:
+            # e.g. the ping command is not installed or cannot be run.
+            return None, ERROR_EXEC_FAILED, str(exc)
 
-        if proc.returncode != 0:
-            return None
+        if proc.returncode == 0:
+            return proc.stdout, None, None
 
-        return proc.stdout
+        detail = self._first_line(proc.stderr)
+
+        if proc.returncode == PING_EXIT_NO_REPLY:
+            return None, ERROR_NO_REPLY, detail
+
+        return None, ERROR_PING_ERROR, detail
 
     @staticmethod
     def _extract_rtt_ms(ping_stdout: str) -> Optional[float]:
@@ -209,7 +240,25 @@ class PingMeasurer:
 
         return float(match.group(1))
 
-    def _failed_result(self, timestamp: str) -> PingResult:
+    @staticmethod
+    def _first_line(text: Optional[str]) -> Optional[str]:
+        """Return the first non-empty line of text, or None."""
+
+        if not text:
+            return None
+
+        for line in text.splitlines():
+            if line.strip():
+                return line.strip()
+
+        return None
+
+    def _failed_result(
+        self,
+        timestamp: str,
+        error: str,
+        error_detail: Optional[str],
+    ) -> PingResult:
         """Create a result representing a failed ping measurement."""
 
         return PingResult(
@@ -218,6 +267,8 @@ class PingMeasurer:
             reachable=False,
             rtt_ms=None,
             loss_pct=LOSS_PCT_ON_FAILURE,
+            error=error,
+            error_detail=error_detail,
         )
 
     @staticmethod
