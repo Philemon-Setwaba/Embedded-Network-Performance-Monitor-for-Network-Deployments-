@@ -17,6 +17,7 @@ library. This avoids an additional Python dependency and uses the
 standard `snmp` package available on Raspberry Pi OS.
 """
 
+import argparse
 import dataclasses
 import subprocess
 import time
@@ -39,11 +40,30 @@ DEFAULT_INTERVAL_S = 30.0
 # Maximum time to wait for an SNMP response.
 DEFAULT_TIMEOUT_S = 3.0
 
+# Interface to poll when none is given. Interface numbers differ per
+# device; list them with:
+#   snmpwalk -v2c -c public <target> 1.3.6.1.2.1.2.2.1.2
+# On the test Pi: 1 = lo, 2 = eth0, 3 = wlan0.
+DEFAULT_IF_INDEX = 3
+
 
 # IF-MIB INTERFACE COUNTER OIDs
 
+# 64-bit counters (ifHCInOctets / ifHCOutOctets, ifXTable). Preferred:
+# in practice they never wrap around.
+IF_HC_IN_OCTETS_OID_BASE = "1.3.6.1.2.1.31.1.1.1.6"
+IF_HC_OUT_OCTETS_OID_BASE = "1.3.6.1.2.1.31.1.1.1.10"
+
+# 32-bit counters (ifInOctets / ifOutOctets). Fallback for agents that do
+# not provide 64-bit counters. They wrap around after 2^32 bytes (about
+# 4.3 GB), e.g. roughly every 6 minutes at 100 Mbit/s.
 IF_IN_OCTETS_OID_BASE = "1.3.6.1.2.1.2.2.1.10"
 IF_OUT_OCTETS_OID_BASE = "1.3.6.1.2.1.2.2.1.16"
+
+COUNTER_OIDS = {
+    64: (IF_HC_IN_OCTETS_OID_BASE, IF_HC_OUT_OCTETS_OID_BASE),
+    32: (IF_IN_OCTETS_OID_BASE, IF_OUT_OCTETS_OID_BASE),
+}
 
 
 @dataclasses.dataclass
@@ -59,10 +79,19 @@ class SNMPPollResult:
     in_bps: Optional[float]
     out_bps: Optional[float]
 
+    # Which counters were read: 64 (ifHC*) or 32 (ifIn/OutOctets).
+    # None if no counters could be read.
+    counter_bits: Optional[int] = None
+
 
 class SNMPPoller:
     """
-    Polls ifInOctets and ifOutOctets for one interface on one SNMP agent.
+    Polls the in/out octet counters for one interface on one SNMP agent.
+
+    64-bit counters (ifHCInOctets/ifHCOutOctets) are tried first. If the
+    agent replies but does not provide them, the 32-bit counters
+    (ifInOctets/ifOutOctets) are used instead. The choice is remembered,
+    so later polls need only one request.
 
     The difference between consecutive counter readings is used to
     calculate the traffic rate in bits per second.
@@ -73,7 +102,7 @@ class SNMPPoller:
     def __init__(
         self,
         target: str,
-        if_index: int,
+        if_index: int = DEFAULT_IF_INDEX,
         community: str = DEFAULT_COMMUNITY,
         timeout_s: float = DEFAULT_TIMEOUT_S,
     ):
@@ -89,14 +118,16 @@ class SNMPPoller:
         # Store when the previous successful poll was completed.
         self._last_poll_monotonic: Optional[float] = None
 
+        # 64 or 32 once known; None until the agent has replied once.
+        self._counter_bits: Optional[int] = None
+
     def poll_once(self) -> SNMPPollResult:
         """Perform one SNMP poll and return the measurement result."""
 
         timestamp = self._now_utc_iso()
         poll_monotonic = time.monotonic()
 
-        stdout = self._run_snmpget_subprocess()
-        counters = self._parse_counters(stdout) if stdout else None
+        counters, bits = self._read_counters()
 
         # SNMP request failed or the response could not be parsed.
         if counters is None:
@@ -132,7 +163,43 @@ class SNMPPoller:
             out_octets=out_octets,
             in_bps=in_bps,
             out_bps=out_bps,
+            counter_bits=bits,
         )
+
+    def _read_counters(self) -> Tuple[Optional[Tuple[int, int]], Optional[int]]:
+        """
+        Read the in/out counters, choosing 64-bit or 32-bit on first use.
+
+        Returns ((in_octets, out_octets), bits), or (None, None) on failure.
+        """
+
+        # Already know which counters this agent provides.
+        if self._counter_bits is not None:
+            stdout = self._run_snmpget_subprocess(self._counter_bits)
+            counters = self._parse_counters(stdout) if stdout else None
+            return (counters, self._counter_bits) if counters else (None, None)
+
+        # First use: try 64-bit counters.
+        stdout = self._run_snmpget_subprocess(64)
+
+        # No reply at all (e.g. timeout): no point trying 32-bit as well.
+        if stdout is None:
+            return None, None
+
+        counters = self._parse_counters(stdout)
+        if counters is not None:
+            self._counter_bits = 64
+            return counters, 64
+
+        # The agent replied, but without 64-bit counters (it answers
+        # "No Such Object"), so fall back to the 32-bit counters.
+        stdout = self._run_snmpget_subprocess(32)
+        counters = self._parse_counters(stdout) if stdout else None
+        if counters is not None:
+            self._counter_bits = 32
+            return counters, 32
+
+        return None, None
 
     def run_continuous(
         self,
@@ -171,15 +238,17 @@ class SNMPPoller:
 
         return datetime.now(timezone.utc).isoformat()
 
-    def _run_snmpget_subprocess(self) -> Optional[str]:
+    def _run_snmpget_subprocess(self, bits: int) -> Optional[str]:
         """
         Run one snmpget request for both interface counters.
 
+        bits: 64 for ifHCInOctets/ifHCOutOctets, 32 for ifIn/OutOctets.
         Both OIDs are requested in one SNMP request.
         """
 
-        in_oid = f"{IF_IN_OCTETS_OID_BASE}.{self.if_index}"
-        out_oid = f"{IF_OUT_OCTETS_OID_BASE}.{self.if_index}"
+        in_base, out_base = COUNTER_OIDS[bits]
+        in_oid = f"{in_base}.{self.if_index}"
+        out_oid = f"{out_base}.{self.if_index}"
 
         try:
             proc = subprocess.run(
@@ -266,8 +335,8 @@ class SNMPPoller:
         delta_in = current_in - previous_in
         delta_out = current_out - previous_out
 
-        # A negative counter difference can happen if the counter wraps
-        # around or the network device resets its counters.
+        # A negative counter difference can happen if a 32-bit counter
+        # wraps around or the network device resets its counters.
         # In this case, the rate cannot be trusted.
         if delta_in < 0 or delta_out < 0:
             return None, None
@@ -281,9 +350,19 @@ class SNMPPoller:
 if __name__ == "__main__":
     # Manual test: perform five measurements at five-second intervals.
     # The deployment interval is 30 seconds by default.
+    parser = argparse.ArgumentParser(description="Poll SNMP interface counters.")
+    parser.add_argument(
+        "if_index",
+        nargs="?",
+        type=int,
+        default=DEFAULT_IF_INDEX,
+        help=f"interface number to poll (default: {DEFAULT_IF_INDEX} = wlan0 on the test Pi)",
+    )
+    args = parser.parse_args()
+
     poller = SNMPPoller(
         target="127.0.0.1",
-        if_index=2,
+        if_index=args.if_index,
     )
 
     poller.run_continuous(
