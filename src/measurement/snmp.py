@@ -358,6 +358,19 @@ if __name__ == "__main__":
         default=DEFAULT_IF_INDEX,
         help=f"interface number to poll (default: {DEFAULT_IF_INDEX} = wlan0 on the test Pi)",
     )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=5.0,
+        help="seconds between polls (default: 5; keep at 5 or more, "
+             "the agent briefly caches counter values)",
+    )
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=5,
+        help="number of polls before stopping (default: 5)",
+    )
     args = parser.parse_args()
 
     poller = SNMPPoller(
@@ -366,6 +379,6 @@ if __name__ == "__main__":
     )
 
     poller.run_continuous(
-        interval_s=5.0,
-        stop_after=5,
+        interval_s=args.interval,
+        stop_after=args.count,
     )
