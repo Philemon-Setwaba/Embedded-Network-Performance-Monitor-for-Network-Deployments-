@@ -2,5 +2,10 @@
   "iperf3": {
     "server": "196.42.111.8",
     "port": 5201
+  },
+  "snmp": {
+    "target": "127.0.0.1",
+    "if_index": 3,
+    "community": "public"
   }
 }
