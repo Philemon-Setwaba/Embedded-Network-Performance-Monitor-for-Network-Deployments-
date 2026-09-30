@@ -1,0 +1,34 @@
+[Unit]
+# Human-readable name shown in systemctl status output
+Description=VictoriaMetrics time-series database
+
+# Only start after the network is available
+# Important for a Pi that may boot without backhaul
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Run as the dedicated system user we created in install.sh — not root
+User=victoriametrics
+Group=victoriametrics
+
+# The command systemd runs to start VictoriaMetrics
+# Each flag is on its own line (\ continues the line) for readability
+ExecStart=/usr/local/bin/victoria-metrics \
+  -storageDataPath=/var/lib/victoriametrics \
+  -retentionPeriod=12 \
+  -httpListenAddr=0.0.0.0:8428 \
+  -memory.allowedPercent=60 \
+  -loggerFormat=json
+
+# Automatically restart if VictoriaMetrics crashes
+Restart=on-failure
+RestartSec=5
+
+# Write logs to the systemd journal (view with: journalctl -u victoria -f)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+# Wire this service into the normal boot sequence
+WantedBy=multi-user.target
