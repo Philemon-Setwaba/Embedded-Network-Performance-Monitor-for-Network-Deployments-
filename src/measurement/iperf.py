@@ -46,16 +46,11 @@ DEFAULT_PORT = 5201
 # Test length is normally chosen by the scheduler; these are defaults.
 DEFAULT_DURATION_S = 10
 
-# TCP starts slowly and speeds up; the first seconds are left out of the
-# result so short tests do not underestimate throughput.
-DEFAULT_OMIT_S = 2
-
 # UDP send rate: about 10 % of a 5 Mbps community uplink (e.g. iNethi),
 # enough to measure jitter and loss without disrupting users.
 DEFAULT_UDP_RATE = "500K"
 
-# Extra time allowed for connecting and finishing before Python stops
-# iperf3 (the test itself takes duration + omit seconds).
+# Extra time allowed for connecting and finishing before Python stops iperf3.
 RUN_TIMEOUT_MARGIN_S = 15
 
 # Pause between tests: the server needs a moment to finish one test
@@ -113,21 +108,25 @@ def run_tcp(
     server: str,
     port: int = DEFAULT_PORT,
     duration_s: int = DEFAULT_DURATION_S,
-    omit_s: int = DEFAULT_OMIT_S,
     download: bool = False,
 ) -> IperfResult:
     """
-    Run one TCP throughput test.
+    Run one TCP throughput test. All seconds are included in the result
+    so that throughput, transfer and duration are consistent with each other.
     download=False: Pi sends (upload). download=True: server sends (-R).
     """
 
     test = TEST_TCP_DOWNLOAD if download else TEST_TCP_UPLOAD
-    args = ["-t", str(duration_s), "-O", str(omit_s)]
+
+    # -t sets how long the test runs.
+    # No -O flag — we include all seconds so the maths is clean:
+    # transfer × 8 ÷ duration = bitrate, with no omitted window to confuse things.
+    args = ["-t", str(duration_s)]
     if download:
         args.append("-R")
 
     result = _new_result(test, server, port, duration_s)
-    data, error = _run_iperf(server, port, args, duration_s + omit_s)
+    data, error = _run_iperf(server, port, args, duration_s)
 
     if error:
         result.error_detail = error
@@ -148,6 +147,9 @@ def run_udp(
 ) -> IperfResult:
     """Run one UDP test at a fixed rate (e.g. "500K") for jitter and loss."""
 
+    # -u = UDP mode
+    # -b = send at this fixed bitrate (not as fast as possible)
+    # -t = test duration in seconds
     args = ["-u", "-b", rate, "-t", str(duration_s)]
 
     result = _new_result(TEST_UDP, server, port, duration_s)
@@ -183,6 +185,8 @@ def _run_iperf(
     Returns (data, None) on success or (None, error message) on failure.
     """
 
+    # -J tells iperf3 to output JSON instead of the human-readable table.
+    # Python reads the JSON by key name rather than parsing text patterns.
     command = ["iperf3", "-c", server, "-p", str(port), "-J"] + args
 
     try:
