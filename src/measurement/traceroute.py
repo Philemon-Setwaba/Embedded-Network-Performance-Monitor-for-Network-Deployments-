@@ -34,6 +34,10 @@ def run_traceroute(target: str) -> str:
         )
     except subprocess.TimeoutExpired:
         return f"traceroute to {target} did not finish within {RUN_TIMEOUT_S:g} s"
+    except OSError as exc:
+        # e.g. traceroute is not installed. Return a message instead of
+        # crashing, so the other measurements keep running.
+        return f"traceroute could not run: {exc}"
 
     return proc.stdout + proc.stderr
 
