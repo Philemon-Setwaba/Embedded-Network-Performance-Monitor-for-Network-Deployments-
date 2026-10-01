@@ -425,8 +425,8 @@ class SNMPPoller:
         if delta_in < 0 or delta_out < 0:
             return None, None
 
-        in_bps = (delta_in * 8) / elapsed_s
-        out_bps = (delta_out * 8) / elapsed_s
+        in_bps = round((delta_in * 8) / elapsed_s, 2)
+        out_bps = round((delta_out * 8) / elapsed_s, 2)
 
         return in_bps, out_bps
 
