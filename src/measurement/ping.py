@@ -32,15 +32,20 @@ DEFAULT_TIMEOUT_S = 2.0
 # The default of 30 seconds satisfies SP-1.
 DEFAULT_INTERVAL_S = 30.0
 
-# Send one ICMP echo request per measurement.
-PING_COUNT = 1
+# Number of ICMP packets to send per measurement.
+# Default is 1 — satisfies FR-1 (reachability + latency).
+# Increase to 5 or 10 to get a meaningful packet loss percentage,
+# e.g. 3 packets lost out of 10 = 30% loss rather than always 0% or 100%.
+# Note: total measurement time increases with count (each packet waits up
+# to timeout_s seconds), so don't set this too high for a 30-second interval.
+DEFAULT_PING_COUNT = 1
 
 # Additional time allowed for the ping process before Python stops it.
 SUBPROCESS_TIMEOUT_MARGIN_S = 1.0
 
-# Loss reported for a failed or successful single probe.
-LOSS_PCT_ON_FAILURE = 100.0
-LOSS_PCT_ON_SUCCESS = 0.0
+# Loss reported when the ping process itself fails entirely (e.g. network
+# unreachable, host unknown). This is different from partial packet loss.
+LOSS_PCT_ON_PROCESS_FAILURE = 100.0
 
 # Reasons a measurement can fail, stored in PingResult.error.
 # iputils ping exits with 1 when no reply is received and 2 for other
@@ -58,9 +63,23 @@ PING_EXIT_NO_REPLY = 1
 # PING OUTPUT PARSING
 # ---------------------------------------------------------------------------
 
-# Matches the RTT value from ping output, for example:
-# "64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=23.4 ms"
-RTT_PATTERN = re.compile(r"time=([\d.]+)\s*ms")
+# With a single packet, ping outputs a per-packet line like:
+#   "64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=23.4 ms"
+# RTT_SINGLE_PATTERN extracts the RTT from that line.
+RTT_SINGLE_PATTERN = re.compile(r"time=([\d.]+)\s*ms")
+
+# With multiple packets, ping adds a summary line at the end:
+#   "rtt min/avg/max/mdev = 12.3/15.1/18.7/2.1 ms"
+# RTT_AVG_PATTERN extracts the AVERAGE RTT (second value) from that summary.
+# The average is more useful than any single packet's RTT when count > 1.
+RTT_AVG_PATTERN = re.compile(
+    r"rtt min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms"
+)
+
+# Extracts the packet loss percentage from ping's statistics line, e.g.:
+#   "5 packets transmitted, 4 received, 20% packet loss, time 4003ms"
+# This works correctly for any count — 0%, 20%, 100%, etc.
+LOSS_PATTERN = re.compile(r"(\d+(?:\.\d+)?)% packet loss")
 
 
 @dataclasses.dataclass
@@ -69,9 +88,9 @@ class PingResult:
 
     timestamp: str
     target: str
-    reachable: bool
-    rtt_ms: Optional[float]
-    loss_pct: float
+    reachable: bool   # True if at least one packet received a reply
+    rtt_ms: Optional[float]   # Average RTT across all packets that replied
+    loss_pct: float   # Percentage of packets that got no reply (0–100)
 
     # Why the measurement failed. None when the target replied.
     # One of the ERROR_* values defined above.
@@ -93,7 +112,12 @@ class PingMeasurer:
     (NFR-5).
     """
 
-    def __init__(self, target: str, timeout_s: float = DEFAULT_TIMEOUT_S):
+    def __init__(
+        self,
+        target: str,
+        timeout_s: float = DEFAULT_TIMEOUT_S,
+        count: int = DEFAULT_PING_COUNT,
+    ):
         # iputils ping treats `-W 0` as an infinite wait (see `man ping`),
         # so a timeout of 0 or less is rejected at start-up rather than
         # silently causing every measurement to hang until the Python
@@ -104,34 +128,45 @@ class PingMeasurer:
                 "(ping treats -W 0 as an infinite wait)"
             )
 
+        # count must be at least 1 — sending zero packets makes no sense.
+        if count < 1:
+            raise ValueError("count must be at least 1")
+
         self.target = target
         self.timeout_s = timeout_s
+        self.count = count  # number of ICMP packets per measurement
 
     # -----------------------------------------------------------------------
     # Single measurement
     # -----------------------------------------------------------------------
 
     def measure_once(self) -> PingResult:
-        """Send one ICMP echo request and return the measurement result."""
+        """Send `self.count` ICMP echo requests and return the result."""
 
         timestamp = self._now_utc_iso()
 
         stdout, error, error_detail = self._run_ping_subprocess()
 
         if error is not None:
+            # The ping process itself failed — not just packet loss.
             return self._failed_result(timestamp, error, error_detail)
 
-        rtt_ms = self._extract_rtt_ms(stdout)
+        # Extract average RTT and loss from ping's output.
+        rtt_ms = self._extract_rtt_ms(stdout, self.count)
+        loss_pct = self._extract_loss_pct(stdout)
 
         if rtt_ms is None:
             return self._failed_result(timestamp, ERROR_NO_RTT, None)
 
+        # reachable = True if at least one packet got a reply (loss < 100%).
+        reachable = loss_pct < 100.0
+
         return PingResult(
             timestamp=timestamp,
             target=self.target,
-            reachable=True,
+            reachable=reachable,
             rtt_ms=rtt_ms,
-            loss_pct=LOSS_PCT_ON_SUCCESS,
+            loss_pct=loss_pct,
         )
 
     # -----------------------------------------------------------------------
@@ -189,24 +224,21 @@ class PingMeasurer:
             - On failure: (None, one of the ERROR_* values, detail or None)
         """
 
-        # `-W` tells ping how many seconds to wait for a reply before
-        # considering the ping unsuccessful. iputils ping accepts decimal
-        # values (e.g. 0.5), and 0 means wait forever (see `man ping`),
-        # so the timeout is passed as-is rather than rounded to an int.
-        # The Python timeout provides a second safety limit and stops the
-        # ping process if it takes too long to finish.
-
         ping_wait_s = f"{self.timeout_s:g}"
-        subprocess_timeout_s = self.timeout_s + SUBPROCESS_TIMEOUT_MARGIN_S
+
+        # The Python safety timeout must cover ALL packets, not just one.
+        # Each packet can wait up to timeout_s before giving up, so the
+        # worst case is count * timeout_s total wait time.
+        subprocess_timeout_s = (
+            self.count * self.timeout_s + SUBPROCESS_TIMEOUT_MARGIN_S
+        )
 
         try:
             proc = subprocess.run(
                 [
                     "ping",
-                    "-c",
-                    str(PING_COUNT),
-                    "-W",
-                    ping_wait_s,
+                    "-c", str(self.count),   # number of packets
+                    "-W", ping_wait_s,        # per-packet reply timeout
                     self.target,
                 ],
                 capture_output=True,
@@ -216,29 +248,59 @@ class PingMeasurer:
         except subprocess.TimeoutExpired:
             return None, ERROR_TIMEOUT, None
         except OSError as exc:
-            # e.g. the ping command is not installed or cannot be run.
             return None, ERROR_EXEC_FAILED, str(exc)
 
         if proc.returncode == 0:
             return proc.stdout, None, None
 
-        detail = self._first_line(proc.stderr)
-
+        # returncode 1 means packets were sent but none replied.
+        # We still return stdout here so we can extract loss_pct from
+        # ping's statistics line (e.g. "100% packet loss").
         if proc.returncode == PING_EXIT_NO_REPLY:
-            return None, ERROR_NO_REPLY, detail
+            return proc.stdout, ERROR_NO_REPLY, self._first_line(proc.stderr)
 
-        return None, ERROR_PING_ERROR, detail
+        return None, ERROR_PING_ERROR, self._first_line(proc.stderr)
 
     @staticmethod
-    def _extract_rtt_ms(ping_stdout: str) -> Optional[float]:
-        """Extract the RTT value in milliseconds from ping output."""
+    def _extract_rtt_ms(ping_stdout: str, count: int) -> Optional[float]:
+        """
+        Extract the RTT value from ping output.
 
-        match = RTT_PATTERN.search(ping_stdout)
+        With count=1, uses the per-packet 'time=X ms' line.
+        With count>1, uses the average from the summary line:
+          'rtt min/avg/max/mdev = X/AVG/X/X ms'
+        The average is more representative than any single packet.
+        """
 
-        if not match:
-            return None
+        if count > 1:
+            # Try the summary line first (more accurate for multiple packets).
+            match = RTT_AVG_PATTERN.search(ping_stdout)
+            if match:
+                return float(match.group(1))
 
-        return float(match.group(1))
+        # Fall back to per-packet line (also works for count=1).
+        match = RTT_SINGLE_PATTERN.search(ping_stdout)
+        if match:
+            return float(match.group(1))
+
+        return None
+
+    @staticmethod
+    def _extract_loss_pct(ping_stdout: str) -> float:
+        """
+        Extract packet loss percentage from ping's statistics output.
+
+        Returns 0.0 if the loss line is not found (assumes success).
+        ping always prints this line even for 100% loss, so 'not found'
+        means something unexpected happened with ping's output format.
+        """
+
+        match = LOSS_PATTERN.search(ping_stdout)
+        if match:
+            return float(match.group(1))
+
+        # Could not find the loss line — assume 0 (no loss).
+        return 0.0
 
     @staticmethod
     def _first_line(text: Optional[str]) -> Optional[str]:
@@ -259,14 +321,14 @@ class PingMeasurer:
         error: str,
         error_detail: Optional[str],
     ) -> PingResult:
-        """Create a result representing a failed ping measurement."""
+        """Create a result representing a completely failed measurement."""
 
         return PingResult(
             timestamp=timestamp,
             target=self.target,
             reachable=False,
             rtt_ms=None,
-            loss_pct=LOSS_PCT_ON_FAILURE,
+            loss_pct=LOSS_PCT_ON_PROCESS_FAILURE,
             error=error,
             error_detail=error_detail,
         )
@@ -294,7 +356,16 @@ class PingMeasurer:
 
 
 if __name__ == "__main__":
-    # Manual test: perform five measurements at five-second intervals.
-    # This is only for testing; the deployment interval is 30 seconds.
-    measurer = PingMeasurer(target="8.8.8.8")
-    measurer.run_continuous(interval_s=5.0, stop_after=5)
+    import sys
+
+    # Read packet count from command line, default to 1.
+    # Usage examples:
+    #   python3 ping.py           → 1 packet (default)
+    #   python3 ping.py 5         → 5 packets
+    #   python3 ping.py 10        → 10 packets
+    count = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PING_COUNT
+
+    print(f"Testing with count={count} packets per measurement, 3 measurements:\n")
+
+    measurer = PingMeasurer(target="8.8.8.8", count=count)
+    measurer.run_continuous(interval_s=5.0, stop_after=3)
