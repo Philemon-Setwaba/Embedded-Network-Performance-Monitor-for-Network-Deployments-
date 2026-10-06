@@ -1,0 +1,34 @@
+# infrastructure/grafana/provisioning/dashboards.yaml
+#
+# Tells Grafana: "load every dashboard .json file from this folder".
+# The dashboard itself is NOT in this file - it is a separate .json file
+# that you export from Grafana and keep in infrastructure/grafana/dashboards/.
+#
+# install.sh copies this file to:
+#   /etc/grafana/provisioning/dashboards/network-monitor.yaml
+
+# Version of the provisioning file format (always 1).
+apiVersion: 1
+
+providers:
+  - # Internal name for this group of dashboards.
+    name: network-monitor
+
+    # The folder the dashboards appear in, in Grafana's "Dashboards" menu.
+    folder: Network Monitor
+
+    # Load dashboards from files on disk.
+    type: file
+
+    # Allow editing in the Grafana UI. Edits are NOT written back to the
+    # file automatically - after editing, export the JSON again and
+    # replace the file in git.
+    allowUiUpdates: true
+
+    # Check the folder for new or changed .json files every 30 seconds.
+    updateIntervalSeconds: 30
+
+    options:
+      # The folder Grafana reads the .json files from.
+      # install.sh creates it and copies the repo's dashboards into it.
+      path: /var/lib/grafana/dashboards/network-monitor
