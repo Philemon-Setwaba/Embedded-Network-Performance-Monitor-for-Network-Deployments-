@@ -5,8 +5,8 @@
     "name": "ad6lfd4",
     "namespace": "default",
     "uid": "7d066271-e89b-48e6-91a1-3faa0c2af0d6",
-    "resourceVersion": "1791369791337007",
-    "generation": 16,
+    "resourceVersion": "1791375255656996",
+    "generation": 18,
     "creationTimestamp": "2026-10-06T18:17:55Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "4354816846905344"
@@ -15,7 +15,7 @@
       "grafana.app/createdBy": "user:ag0c8wk6nehoga",
       "grafana.app/saved-from-ui": "Grafana v13.2.3 (90ffed056f)",
       "grafana.app/updatedBy": "user:ag0c8wk6nehoga",
-      "grafana.app/updatedTimestamp": "2026-10-07T10:43:11Z"
+      "grafana.app/updatedTimestamp": "2026-10-07T12:14:15Z"
     }
   },
   "spec": {
@@ -596,9 +596,11 @@
                       },
                       "spec": {
                         "editorMode": "code",
+                        "exemplar": false,
                         "expr": "   avg_over_time(ping_reachable{device=\"$device\", target=\"$target\"}[$__range]) * 100",
+                        "instant": true,
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": false
                       }
                     },
                     "refId": "A",
@@ -1071,7 +1073,7 @@
                       "spec": {
                         "x": 0,
                         "y": 16,
-                        "width": 23,
+                        "width": 24,
                         "height": 7,
                         "element": {
                           "kind": "ElementReference",
