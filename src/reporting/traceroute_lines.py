@@ -16,7 +16,8 @@ Lines produced:
                                           replied - the time EXACTLY as printed
     traceroute_hop_annotation_info{hop, probe, hop_ip, annotation}   1
                                           only if traceroute printed e.g. "!X"
-    traceroute_last_reply_info{hop, hop_ip}   1   the last router that replied:
+    traceroute_last_reply_info{hop, hop_ip}   1   the target, if it was reached;
+                                          otherwise the last router that replied:
                                           WHERE along the path replies stop
     traceroute_error_info{error_detail}  1  only if it could not run
 
@@ -45,7 +46,7 @@ from src.reporting import line_format
 # Table that turns the status TEXT into a NUMBER for traceroute_status.
 # In Grafana, "value mappings" turn the numbers back into these words.
 STATUS_CODES = {
-    tr_module.STATUS_REACHED: 0,        # a probe got a reply from the target
+    tr_module.STATUS_REACHED: 0,        # the target replied normally (no "!" mark)
     tr_module.STATUS_NOT_REACHED: 1,    # ran, but the target never replied
     tr_module.STATUS_BLOCKED: 2,        # a router replied "blocked" (!X, !H, ...)
     tr_module.STATUS_COULD_NOT_RUN: 3,  # traceroute did not run or did not finish
@@ -100,6 +101,16 @@ def to_lines(result: "tr_module.TracerouteResult") -> List[str]:
             if probe.annotation:
                 note_labels = dict(probe_labels, annotation=probe.annotation)
                 lines.append(line_format.line("traceroute_hop_annotation_info", note_labels, 1, ts))
+
+    # If the target itself replied normally, it is the "last reply", even if
+    # a later probe on the same hop came from another router. Real case:
+    #   9  8.8.8.8  19.636 ms  19.611 ms 192.178.86.211  26.433 ms
+    # Without this, last_reply_info would show 192.178.86.211.
+    if result.status == tr_module.STATUS_REACHED:
+        for hop in result.hops:
+            for probe in hop.probes:
+                if probe.ip == result.target_ip and not probe.annotation:
+                    last_hop, last_ip = hop.hop, probe.ip
 
     # Highest hop that replied, and which router it was.
     if last_hop is not None:
