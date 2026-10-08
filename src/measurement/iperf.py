@@ -197,7 +197,14 @@ def _run_iperf(
             timeout=test_time_s + RUN_TIMEOUT_MARGIN_S,
         )
     except subprocess.TimeoutExpired:
-        return None, "iperf3 did not finish in time (server busy or stuck?)"
+        # Python stopped iperf3 after test time + margin.
+        # Causes: no reply from the server (e.g. firewall drops it),
+        # or the server is busy or stuck.
+        limit_s = test_time_s + RUN_TIMEOUT_MARGIN_S
+        return None, (
+            f"iperf3 did not finish within {limit_s} s "
+            "(no reply from server, or server busy or stuck)"
+        )
     except OSError as exc:
         # e.g. iperf3 is not installed
         return None, str(exc)
