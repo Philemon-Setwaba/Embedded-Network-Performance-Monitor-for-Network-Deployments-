@@ -41,7 +41,7 @@ DEFAULT_TARGET = "8.8.8.8"
 RUN_TIMEOUT_S = 60.0
 
 # Possible outcomes, stored in TracerouteResult.status
-STATUS_REACHED = "reached"            # a probe got a reply from the target itself
+STATUS_REACHED = "reached"            # the target itself replied normally (no "!" mark)
 STATUS_NOT_REACHED = "not_reached"    # ran, but the target never replied
 STATUS_BLOCKED = "blocked"            # a router replied "blocked/unreachable" (!X, !H, ...)
 STATUS_COULD_NOT_RUN = "could_not_run"  # traceroute did not run or did not finish
@@ -117,8 +117,11 @@ def run_traceroute(target: str = DEFAULT_TARGET) -> TracerouteResult:
     hops = _parse_hops(raw)
 
     # Work out the status from the probes.
+    # "reached" only counts a NORMAL reply from the target (no "!" mark).
+    # A target that only answers e.g. "!X" is "blocked" - real case:
+    #   3  10.255.255.1  2.728 ms !X  2.836 ms !X  3.758 ms !X
     all_probes = [p for h in hops for p in h.probes]
-    if any(p.ip == target_ip for p in all_probes):
+    if any(p.ip == target_ip and not p.annotation for p in all_probes):
         status = STATUS_REACHED
     elif any(p.annotation for p in all_probes):
         status = STATUS_BLOCKED
