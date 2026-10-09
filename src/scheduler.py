@@ -12,7 +12,7 @@ How it works:
     (never two at once - active tests must not overlap)
   - then it sleeps until the next job is due
 
-For now only the SNMP job is added. The other jobs (health, Wi-Fi, ping,
+For now the SNMP and health jobs are added. The other jobs (Wi-Fi, ping,
 TCP, traceroute, iperf3) and state.py will be added one at a time.
 
 How to run (from the project folder ~/embedded-network-monitor):
@@ -24,12 +24,18 @@ import time
 from datetime import datetime, timezone
 
 from src.jobs.snmp_job import SnmpJob
+from src.jobs.health_job import HealthJob
 
 
 def build_jobs():
-    """The list of jobs the scheduler runs. Add new jobs here."""
+    """
+    The list of jobs the scheduler runs, in this order. Add new jobs here.
+    SNMP and health have the same interval, so they run in the same round,
+    back to back (milliseconds apart) - their readings line up in time.
+    """
     return [
         SnmpJob(),      # every 10 s (config.json "snmp.interval_s"), in every state
+        HealthJob(),    # every 10 s (config.json "health.interval_s"), in every state
     ]
 
 
