@@ -15,5 +15,10 @@
   "wifi": {
     "interface": "wlan0",
     "interval_s": 2
+  },
+  "ping": {
+    "target": "8.8.8.8",
+    "count": 5,
+    "interval_s": 10
   }
 }
