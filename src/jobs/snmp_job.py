@@ -24,7 +24,6 @@ Settings: the "snmp" section of config.json, e.g.
              "interval_s": 10}
 """
 
-import json
 from typing import Optional
 
 # measure
@@ -33,19 +32,12 @@ from src.measurement import snmp
 from src.reporting import snmp_lines
 # send
 from src.reporting import victoria
+# read interval_s from config.json
+from src.jobs.job_config import load_interval_s
 
 
 # Used when config.json has no "interval_s" in its "snmp" section.
 DEFAULT_INTERVAL_S = 10.0
-
-
-def _load_interval_s() -> float:
-    """Read "interval_s" from the "snmp" section of config.json (or use 10 s)."""
-    try:
-        with open(snmp.CONFIG_PATH) as f:
-            return float(json.load(f).get("snmp", {}).get("interval_s", DEFAULT_INTERVAL_S))
-    except FileNotFoundError:
-        return DEFAULT_INTERVAL_S
 
 
 class SnmpJob:
@@ -62,7 +54,7 @@ class SnmpJob:
         self.poller = snmp.SNMPPoller(target=target, if_index=if_index, community=community)
 
         # How often scheduler.py should call run().
-        self.interval_s = _load_interval_s()
+        self.interval_s = load_interval_s("snmp", DEFAULT_INTERVAL_S)
 
         # The latest poll result and push error (None = no error), for state.py.
         self.latest: Optional[snmp.SNMPPollResult] = None
