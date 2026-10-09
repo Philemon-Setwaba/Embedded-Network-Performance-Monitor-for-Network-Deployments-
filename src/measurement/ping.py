@@ -5,12 +5,19 @@ Active measurement: round-trip latency and reachability via ICMP ping.
 
 Implements:
   FR-1 - measure round-trip latency and reachability of the backhaul link.
-  SP-1 - latency is measured at a configurable interval, with a default
-         interval of 30 seconds.
+  SP-1 - latency is measured at a configurable interval. The monitor uses
+         10 s (set in config.json "ping.interval_s" and used by the
+         scheduler); DEFAULT_INTERVAL_S below is only used when this file
+         runs measurements on its own (run_continuous).
 
 The implementation uses the system `ping` command rather than sending
 raw ICMP packets directly. This avoids additional Python dependencies
 and keeps the measurement code simple.
+
+Besides the average RTT, the min / max / mdev values from ping's summary
+line are kept as well (raw values, exactly as ping prints them), because
+they show latency VARIATION within one measurement (event B4), e.g.
+    22.0, 22.5, 21.9, 22.4, 32.3 ms -> avg 24.2 but max 32.3, mdev 4.0
 """
 
 import dataclasses
@@ -28,16 +35,16 @@ from typing import Optional, Tuple
 # Maximum time to wait for a single ping reply.
 DEFAULT_TIMEOUT_S = 2.0
 
-# Time between measurements when running continuously.
-# The default of 30 seconds satisfies SP-1.
-DEFAULT_INTERVAL_S = 30.0
+# Time between measurements when running continuously (run_continuous).
+# 10 s, the same as the monitor's interval in config.json (SP-1).
+DEFAULT_INTERVAL_S = 10.0
 
 # Number of ICMP packets to send per measurement.
 # Default is 1 — satisfies FR-1 (reachability + latency).
 # Increase to 5 or 10 to get a meaningful packet loss percentage,
 # e.g. 3 packets lost out of 10 = 30% loss rather than always 0% or 100%.
-# Note: total measurement time increases with count (each packet waits up
-# to timeout_s seconds), so don't set this too high for a 30-second interval.
+# Note: total measurement time increases with count (5 packets take about
+# 4 s when replies come back), so keep it well below the 10 s interval.
 DEFAULT_PING_COUNT = 1
 
 # Additional time allowed for the ping process before Python stops it.
@@ -68,12 +75,12 @@ PING_EXIT_NO_REPLY = 1
 # RTT_SINGLE_PATTERN extracts the RTT from that line.
 RTT_SINGLE_PATTERN = re.compile(r"time=([\d.]+)\s*ms")
 
-# With multiple packets, ping adds a summary line at the end:
-#   "rtt min/avg/max/mdev = 12.3/15.1/18.7/2.1 ms"
-# RTT_AVG_PATTERN extracts the AVERAGE RTT (second value) from that summary.
-# The average is more useful than any single packet's RTT when count > 1.
-RTT_AVG_PATTERN = re.compile(
-    r"rtt min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/[\d.]+ ms"
+# ping adds a summary line at the end (when at least one reply came back):
+#   "rtt min/avg/max/mdev = 21.935/24.223/32.278/4.033 ms"
+# RTT_SUMMARY_PATTERN extracts ALL FOUR values: min, avg, max, mdev.
+# (The average is used for rtt_ms when count > 1, as before.)
+RTT_SUMMARY_PATTERN = re.compile(
+    r"rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+) ms"
 )
 
 # Extracts the packet loss percentage from ping's statistics line, e.g.:
@@ -99,6 +106,12 @@ class PingResult:
     # Extra detail for diagnosis, e.g. ping's own error message such as
     # "ping: connect: Network is unreachable". None when not available.
     error_detail: Optional[str] = None
+
+    # From ping's summary line "rtt min/avg/max/mdev = ...", exactly as
+    # printed. None when there was no reply (ping prints no summary then).
+    rtt_min_ms: Optional[float] = None    # fastest reply
+    rtt_max_ms: Optional[float] = None    # slowest reply
+    rtt_mdev_ms: Optional[float] = None   # how much the replies vary
 
 
 class PingMeasurer:
@@ -158,6 +171,12 @@ class PingMeasurer:
         if rtt_ms is None:
             return self._failed_result(timestamp, ERROR_NO_RTT, None)
 
+        # min / max / mdev from the summary line (None if it is missing).
+        summary = self._extract_rtt_summary(stdout)
+        rtt_min_ms, rtt_max_ms, rtt_mdev_ms = (
+            (summary[0], summary[2], summary[3]) if summary else (None, None, None)
+        )
+
         # reachable = True if at least one packet got a reply (loss < 100%).
         reachable = loss_pct < 100.0
 
@@ -167,6 +186,9 @@ class PingMeasurer:
             reachable=reachable,
             rtt_ms=rtt_ms,
             loss_pct=loss_pct,
+            rtt_min_ms=rtt_min_ms,
+            rtt_max_ms=rtt_max_ms,
+            rtt_mdev_ms=rtt_mdev_ms,
         )
 
     # -----------------------------------------------------------------------
@@ -274,9 +296,9 @@ class PingMeasurer:
 
         if count > 1:
             # Try the summary line first (more accurate for multiple packets).
-            match = RTT_AVG_PATTERN.search(ping_stdout)
+            match = RTT_SUMMARY_PATTERN.search(ping_stdout)
             if match:
-                return float(match.group(1))
+                return float(match.group(2))   # group 2 = avg
 
         # Fall back to per-packet line (also works for count=1).
         match = RTT_SINGLE_PATTERN.search(ping_stdout)
@@ -284,6 +306,22 @@ class PingMeasurer:
             return float(match.group(1))
 
         return None
+
+    @staticmethod
+    def _extract_rtt_summary(
+        ping_stdout: str,
+    ) -> Optional[Tuple[float, float, float, float]]:
+        """
+        Extract (min, avg, max, mdev) from ping's summary line, e.g.
+          'rtt min/avg/max/mdev = 21.935/24.223/32.278/4.033 ms'
+          -> (21.935, 24.223, 32.278, 4.033)
+        Returns None if the line is missing (e.g. no reply at all).
+        """
+
+        match = RTT_SUMMARY_PATTERN.search(ping_stdout)
+        if not match:
+            return None
+        return tuple(float(value) for value in match.groups())
 
     @staticmethod
     def _extract_loss_pct(ping_stdout: str) -> float:
