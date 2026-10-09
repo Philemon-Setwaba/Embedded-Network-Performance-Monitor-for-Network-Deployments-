@@ -13,9 +13,16 @@ Lines produced:
     ping_status      0..5    always             - error as a number (table below)
     ping_reachable   1 / 0   always
     ping_loss_pct    0..100  always
-    ping_rtt_ms      ms      only if there was a reply
+    ping_rtt_ms      ms      only if there was a reply (average)
+    ping_rtt_min_ms  ms      only if there was a reply (fastest)
+    ping_rtt_max_ms  ms      only if there was a reply (slowest)
+    ping_rtt_mdev_ms ms      only if there was a reply (how much they vary)
     ping_error_info  1       only if there is an error message
                              (the message is in the label error_detail)
+
+min / max / mdev are copied exactly as ping printed them. They show latency
+VARIATION within one measurement (event B4) - real example from the Pi:
+    avg 33.623 ms, but max 81.72 ms and mdev 24.049 ms (one slow reply)
 """
 
 # These are only "type hints" - they do not change how the code runs.
@@ -93,6 +100,17 @@ def to_lines(result: "ping_module.PingResult", count: int) -> List[str]:
     # No reply means rtt_ms is None, and None is not a number.
     if result.rtt_ms is not None:
         lines.append(line_format.line("ping_rtt_ms", labels, result.rtt_ms, ts))
+
+    # min / max / mdev from ping's summary line - also only when there was
+    # a reply (they are None otherwise, and None is not a number).
+    extra = [
+        ("ping_rtt_min_ms", result.rtt_min_ms),
+        ("ping_rtt_max_ms", result.rtt_max_ms),
+        ("ping_rtt_mdev_ms", result.rtt_mdev_ms),
+    ]
+    for name, value in extra:
+        if value is not None:
+            lines.append(line_format.line(name, labels, value, ts))
 
     # Only send ping_error_info when there is an error message.
     # The message goes into an extra label "error_detail"; the value is just 1.
