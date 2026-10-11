@@ -9,7 +9,7 @@ It only translates. It does NOT send - victoria.py does that.
 Labels on every line: device, target
 
 Lines produced:
-    traceroute_status              0..3   always - see STATUS_CODES below
+    traceroute_status              0..4   always - see STATUS_CODES below
     traceroute_hops_reached        n      highest hop that replied (if it ran)
     traceroute_hop_responded{hop}  1 / 0  one line per hop (0 = "* * *")
     traceroute_hop_rtt_ms{hop, probe, hop_ip}   ms   one line per probe that
@@ -50,6 +50,8 @@ STATUS_CODES = {
     tr_module.STATUS_NOT_REACHED: 1,    # ran, but the target never replied
     tr_module.STATUS_BLOCKED: 2,        # a router replied "blocked" (!X, !H, ...)
     tr_module.STATUS_COULD_NOT_RUN: 3,  # traceroute did not run or did not finish
+    tr_module.STATUS_LOCAL_UNREACHABLE: 4,  # the "!" mark came from the Pi itself:
+                                            # it could not reach its gateway
 }
 
 # Safety net: a status not in the table is stored as -1 ("unknown").
