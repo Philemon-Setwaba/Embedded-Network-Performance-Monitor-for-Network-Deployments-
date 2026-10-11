@@ -30,6 +30,7 @@ Usage:
 import argparse
 import dataclasses
 import re
+import socket
 import subprocess
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -56,6 +57,12 @@ STATUS_REACHED = "reached"            # the target itself replied normally (no "
 STATUS_NOT_REACHED = "not_reached"    # ran, but the target never replied
 STATUS_BLOCKED = "blocked"            # a router replied "blocked/unreachable" (!X, !H, ...)
 STATUS_COULD_NOT_RUN = "could_not_run"  # traceroute did not run or did not finish
+# The "!" mark came from the Pi ITSELF: the Pi could not reach its first hop
+# (gateway), so its own kernel answered "host unreachable". Real case
+# (2026-10-11, netem loss 100 % for 40 s, Pi IP 196.24.157.221, gateway
+# 196.24.152.1 shown INCOMPLETE by `ip neigh` = ARP for the gateway failed):
+#    6  * 196.24.157.221  383.925 ms !H  383.908 ms !H
+STATUS_LOCAL_UNREACHABLE = "local_unreachable"
 
 # First line, e.g. "traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets"
 # The address in brackets is the target's IP (also when a name was given).
@@ -90,6 +97,7 @@ class TracerouteResult:
     hops: List[TracerouteHop]
     raw_output: str                    # everything traceroute printed, unchanged
     error_detail: Optional[str] = None # why it could not run
+    source_ip: Optional[str] = None    # the Pi's own address used to reach the target
 
 
 def run_traceroute(target: str = DEFAULT_TARGET) -> TracerouteResult:
@@ -127,20 +135,40 @@ def run_traceroute(target: str = DEFAULT_TARGET) -> TracerouteResult:
 
     target_ip = header.group(1)
     hops = _parse_hops(raw)
+    source_ip = _source_ip(target_ip)
 
     # Work out the status from the probes.
     # "reached" only counts a NORMAL reply from the target (no "!" mark).
-    # A target that only answers e.g. "!X" is "blocked" - real case:
+    # A "!" mark from the Pi's OWN address is "local_unreachable" (see top).
+    # A "!" mark from anyone else is "blocked" - real case:
     #   3  10.255.255.1  2.728 ms !X  2.836 ms !X  3.758 ms !X
     all_probes = [p for h in hops for p in h.probes]
+    marked = [p for p in all_probes if p.annotation]
     if any(p.ip == target_ip and not p.annotation for p in all_probes):
         status = STATUS_REACHED
-    elif any(p.annotation for p in all_probes):
+    elif source_ip and any(p.ip == source_ip for p in marked):
+        status = STATUS_LOCAL_UNREACHABLE
+    elif marked:
         status = STATUS_BLOCKED
     else:
         status = STATUS_NOT_REACHED
 
-    return TracerouteResult(timestamp, target, target_ip, status, hops, raw)
+    return TracerouteResult(timestamp, target, target_ip, status, hops, raw,
+                            source_ip=source_ip)
+
+
+def _source_ip(target_ip: str) -> Optional[str]:
+    """
+    The Pi's own address it would use to reach target_ip, or None.
+    A UDP "connect" sends NOTHING - it only asks the kernel which route and
+    source address it would use, so this also works during an outage.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect((target_ip, 33434))     # any port; nothing is sent
+            return s.getsockname()[0]
+    except OSError:
+        return None
 
 
 def _parse_hops(raw: str) -> List[TracerouteHop]:
@@ -194,6 +222,6 @@ if __name__ == "__main__":
     result = run_traceroute(args.target)
     print(result.raw_output)
     print("status:", result.status, "| target_ip:", result.target_ip,
-          "| error:", result.error_detail)
+          "| source_ip:", result.source_ip, "| error:", result.error_detail)
     for hop in result.hops:
         print(hop)
