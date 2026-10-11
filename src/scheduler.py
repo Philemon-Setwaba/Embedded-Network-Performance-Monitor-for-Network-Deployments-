@@ -10,7 +10,8 @@ TWO LANES, each in its own thread, running side by side:
 
     passive lane:  snmp (10 s), health (10 s), wifi (2 s)
                    only read local values - never wait for an active test
-    active lane:   ping (10 s)   (later: tcp, traceroute, iperf3)
+    active lane:   ping (10 s), tcp (only after a ping with no reply)
+                   (later: traceroute, iperf3)
                    send traffic over the link - ONE AT A TIME, never overlapping
 
 Why two lanes: an active test can take a long time (ping ~4-6 s, iperf3
@@ -40,6 +41,7 @@ from src.jobs.snmp_job import SnmpJob
 from src.jobs.health_job import HealthJob
 from src.jobs.wifi_job import WifiJob
 from src.jobs.ping_job import PingJob
+from src.jobs.tcp_job import TcpJob
 
 
 # Only one thread may print at a time, so lines never get mixed.
@@ -94,7 +96,10 @@ class Lane:
                 if self.stop_event.is_set():
                     break
                 if time.monotonic() >= next_due[job.name]:
-                    self.run_job(job)
+                    # Some jobs only run when needed (e.g. TCP only after a
+                    # failed ping). They have should_run(); others always run.
+                    if getattr(job, "should_run", lambda: True)():
+                        self.run_job(job)
                     # Next run = one interval after the planned time, so the
                     # timing does not drift. If the job was late, do not try
                     # to "catch up" with a burst.
@@ -117,8 +122,10 @@ def build_lanes(stop_event: threading.Event):
         WifiJob(),      # every 2 s  (config.json "wifi.interval_s")
     ], stop_event)
 
+    ping_job = PingJob()
     active = Lane("active", [
-        PingJob(),      # every 10 s (config.json "ping.interval_s"), 5 packets
+        ping_job,           # every 10 s (config.json "ping.interval_s"), 5 packets
+        TcpJob(ping_job),   # right after ping, ONLY when that ping got no reply
     ], stop_event)
 
     return [passive, active]
@@ -131,7 +138,8 @@ def main() -> None:
     print("Scheduler started. Lanes and jobs:")
     for lane in lanes:
         for job in lane.jobs:
-            print(f"  [{lane.name:<7}] {job.name:<10} every {job.interval_s:g} s")
+            when = " (only when needed)" if hasattr(job, "should_run") else ""
+            print(f"  [{lane.name:<7}] {job.name:<10} every {job.interval_s:g} s{when}")
     print("Press Ctrl+C to stop.\n")
 
     # One thread per lane. daemon=True: if the main program ends, they end too.
