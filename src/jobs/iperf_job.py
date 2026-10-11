@@ -25,14 +25,25 @@ WHEN - one set per SLOT per day (times are South Africa time, SAST = UTC+2):
     not reachable), the set is tried again after 1 hour, inside the slot
   - if the link check never passes in a slot, that slot has no set
 
+REMEMBERED ACROSS RESTARTS: which slots are done and when each slot was
+last tried are saved in data/iperf_state.json (next to config.json), e.g.
+    {"done": ["2026-10-11 afternoon"],
+     "last_try": {"2026-10-11 afternoon": 1791719852.0}}
+so a restart, crash, reboot or power cut does NOT cause an extra set
+(seen on 2026-10-11: two scheduler starts in the afternoon = two sets).
+Only the last KEEP_DAYS days are kept, so the file stays tiny.
+If the file is missing or broken, the job starts empty (never crashes).
+Times in the file are wall-clock seconds (time.time()), because the
+monotonic clock restarts at every boot.
+
 Why: the night set gives a clean capacity number (link quiet); the three
 day sets show how the link behaves when people use it. The slots, the
 link checks and the 1 h retry are PROJECT CHOICES.
 
 Cost: one set on the iNethi link ~ 18.6 MB (TCP 10 s x 10 Mbit/s down
 + 10 s x 5 Mbit/s up ~ 18.75 MB, + UDP ~0.6 MB); 4 sets/day ~ 75 MB/day.
-While a set runs (~36 s + iperf3 start-up), the active lane is busy and
-ping waits (measured: one ping check is skipped).
+While a set runs (~35 s measured), the active lane is busy and ping waits
+(measured: 3 ping checks skipped).
 
 Own traffic marker: right before and right after each test it stores
     iperf_test_active{test, slot} 1   (start)
@@ -42,8 +53,11 @@ so Grafana can leave the monitor's OWN iperf3 traffic out of "link use".
 Settings: the "iperf3" section of config.json: "server", "port".
 """
 
+import json
+import os
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Callable, List, Optional
 
 # measure
@@ -52,8 +66,9 @@ from src.measurement import iperf
 from src.reporting import iperf_lines, line_format
 # send
 from src.reporting import victoria
-# backhaul state codes
+# backhaul state codes, config.json location
 from src.jobs import state
+from src.jobs.job_config import CONFIG_PATH
 
 
 # South Africa Standard Time = UTC+2 all year (South Africa has no daylight saving).
@@ -75,6 +90,10 @@ RETRY_S = 3600.0        # a failed set: try again after 1 h (inside the slot)
 
 # The order of the three tests in one set.
 SET_TESTS = [iperf.TEST_TCP_UPLOAD, iperf.TEST_TCP_DOWNLOAD, iperf.TEST_UDP]
+
+# Where "done" and "last try" are saved, and how many days to keep.
+STATE_PATH = CONFIG_PATH.parent / "data" / "iperf_state.json"
+KEEP_DAYS = 3
 
 
 def current_slot(now: datetime):
@@ -105,26 +124,61 @@ class IperfJob:
 
     def __init__(self, state_job, snmp_job,
                  now: Callable[[], datetime] = lambda: datetime.now(SAST),
-                 clock: Callable[[], float] = time.monotonic,
-                 sleep: Callable[[float], None] = time.sleep):
+                 sleep: Callable[[float], None] = time.sleep,
+                 state_path: Path = STATE_PATH):
         self.state_job = state_job
         self.snmp_job = snmp_job
-        self.now = now              # wall time (for the slots)
-        self.clock = clock          # for "how long since" (never jumps)
+        self.now = now              # wall time (slots AND "1 h since last try")
         self.sleep = sleep          # replaceable, so the test does not wait
+        self.state_path = Path(state_path)
 
         self.server, self.port = iperf.load_server_config()
 
         # Checked every round, after state (and traceroute).
         self.interval_s = state_job.interval_s
 
-        self._done = set()                       # {"2026-10-11 morning", ...}
-        self._last_try = {}                      # slot key -> clock time of last try
+        # Remembered across restarts (see top of file).
+        self._done, self._last_try = self._load_state()
         self._slot_key: Optional[str] = None     # the slot this run is for
         self._slot_name: Optional[str] = None
 
         self.latest: List[iperf.IperfResult] = []
         self.latest_push_error: Optional[str] = None
+
+    # -----------------------------------------------------------------------
+    # The saved file
+    # -----------------------------------------------------------------------
+
+    def _load_state(self):
+        """Read done slots and last tries from the file; empty if missing/broken."""
+        try:
+            with open(self.state_path) as f:
+                data = json.load(f)
+            done = set(str(k) for k in data.get("done", []))
+            last_try = {str(k): float(v) for k, v in data.get("last_try", {}).items()}
+            return done, last_try
+        except (OSError, ValueError, TypeError, AttributeError):
+            return set(), {}
+
+    def _save_state(self) -> None:
+        """Write the file, keeping only the last KEEP_DAYS days. Never raises."""
+        oldest = (self.now().date() - timedelta(days=KEEP_DAYS - 1)).isoformat()
+        keep = lambda key: key[:10] >= oldest          # key = "YYYY-MM-DD slot"
+        self._done = {k for k in self._done if keep(k)}
+        self._last_try = {k: v for k, v in self._last_try.items() if keep(k)}
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.state_path.with_suffix(".tmp")
+            with open(tmp, "w") as f:
+                json.dump({"done": sorted(self._done), "last_try": self._last_try},
+                          f, indent=1)
+            os.replace(tmp, self.state_path)           # all-or-nothing write
+        except OSError:
+            pass   # cannot save: the job still works, it just forgets on restart
+
+    # -----------------------------------------------------------------------
+    # When to run
+    # -----------------------------------------------------------------------
 
     def should_run(self) -> bool:
         """True if this slot has no set yet, it is safe, and not tried < 1 h ago."""
@@ -141,13 +195,17 @@ class IperfJob:
         if key in self._done:
             return False
         last = self._last_try.get(key)
-        if last is not None and self.clock() - last < RETRY_S:
+        if last is not None and now.timestamp() - last < RETRY_S:
             return False
         if not link_quiet(self.snmp_job, readings, down_bps, up_bps):
             return False
 
         self._slot_key, self._slot_name = key, name
         return True
+
+    # -----------------------------------------------------------------------
+    # One set
+    # -----------------------------------------------------------------------
 
     def _marker(self, test: str, value: int) -> None:
         """Store iperf_test_active{test, slot} = 1 (start) or 0 (end), at this moment."""
@@ -169,7 +227,10 @@ class IperfJob:
     def run(self) -> List[iperf.IperfResult]:
         """Run the whole set: TCP up, pause, TCP down, pause, UDP. Never raises."""
         key = self._slot_key
-        self._last_try[key] = self.clock()
+        if key is not None:
+            self._last_try[key] = self.now().timestamp()
+            self._save_state()            # saved BEFORE the set: a crash mid-set
+                                          # still counts as a try (1 h retry)
 
         results: List[iperf.IperfResult] = []
         push_error: Optional[str] = None
@@ -183,8 +244,9 @@ class IperfJob:
             results.append(result)
 
         # The slot is done only if ALL three tests worked.
-        if all(r.success for r in results):
+        if key is not None and all(r.success for r in results):
             self._done.add(key)
+            self._save_state()
 
         self.latest = results                                 # 4. remember
         self.latest_push_error = push_error
@@ -192,14 +254,17 @@ class IperfJob:
 
 
 if __name__ == "__main__":
-    # Part 1: FAKE time, state, SNMP and iperf3 - shows the decisions only.
-    # Nothing is measured and nothing is stored in part 1.
+    # Part 1: FAKE time, state, SNMP and iperf3, and a TEMPORARY state file -
+    # shows the decisions, including a restart. Nothing is measured, nothing
+    # is stored in VictoriaMetrics, and the real data/iperf_state.json is
+    # not touched.
     #   python3 -m src.jobs.iperf_job
     # Part 2 (only with --real): ONE real set (TCP up, TCP down, UDP) to the
     # server in config.json (start `iperf3 -s` on the laptop first).
-    # Stored as real data.
+    # Stored as real data. Uses (and updates) the real state file.
     #   python3 -m src.jobs.iperf_job --real
     import sys
+    import tempfile
     import types
 
     if "--real" in sys.argv:
@@ -207,7 +272,10 @@ if __name__ == "__main__":
         quiet = types.SimpleNamespace(reachable=True, in_bps=0.0, out_bps=0.0)
         fake_snmp = types.SimpleNamespace(recent=lambda n: [quiet] * n)
         job = IperfJob(fake_state, fake_snmp)
-        job.should_run()
+        if not job.should_run():
+            print(f"Not run: this slot is already done or was tried < 1 h ago "
+                  f"(see {job.state_path}).")
+            sys.exit(0)
         print(f"One real set to {job.server}:{job.port} (slot {job._slot_name}) ...")
         start = time.monotonic()
         for r in job.run():
@@ -215,6 +283,7 @@ if __name__ == "__main__":
         print(f"set took {time.monotonic() - start:.1f} s")
         print("-> pushed" if job.latest_push_error is None
               else f"-> push FAILED: {job.latest_push_error}")
+        print(f"saved: {job.state_path}")
         sys.exit(0)
 
     victoria.push = lambda lines: None                 # part 1: store nothing
@@ -236,23 +305,31 @@ if __name__ == "__main__":
     fake_snmp = types.SimpleNamespace(recent=lambda n: [reading() for _ in range(n)])
     fake_state = types.SimpleNamespace(state=state.STATE_UP, interval_s=10.0)
 
-    t = {"wall": None, "mono": 0.0}
-    job = IperfJob(fake_state, fake_snmp, now=lambda: t["wall"],
-                   clock=lambda: t["mono"], sleep=lambda s: None)
+    tmp_file = Path(tempfile.mkdtemp()) / "iperf_state.json"
+    t = {"wall": None}
+
+    def new_job():
+        return IperfJob(fake_state, fake_snmp, now=lambda: t["wall"],
+                        sleep=lambda s: None, state_path=tmp_file)
+    job = new_job()
 
     U, D = state.STATE_UP, state.STATE_DOWN
+    RESTART = "RESTART"
     steps = [
-        # (day, SAST time, state, (in, out) bps, set fails?)
+        # (day, SAST time, state, (in, out) bps, set fails?)  or RESTART
         (12, "00:10", U, (2.0 * M, 0.1 * M), False),   # night, not quiet (2 Mbit/s) -> -
         (12, "00:20", U, (0.2 * M, 0.1 * M), True),    # night, quiet, set FAILS -> set
-        (12, "00:50", U, (0.2 * M, 0.1 * M), False),   # < 1 h after the failure -> -
+        RESTART,                                        # scheduler restarted
+        (12, "00:50", U, (0.2 * M, 0.1 * M), False),   # < 1 h after the failure -> - (remembered)
         (12, "01:21", U, (0.2 * M, 0.1 * M), False),   # retry -> set (night done)
-        (12, "03:00", U, (0.2 * M, 0.1 * M), False),   # night done -> -
+        RESTART,
+        (12, "03:00", U, (0.2 * M, 0.1 * M), False),   # night done -> - (remembered)
         (12, "05:30", U, (0.2 * M, 0.1 * M), False),   # no slot -> -
         (12, "06:05", D, (0.0, 0.0),         False),   # morning, backhaul down -> -
         (12, "06:15", U, (8.0 * M, 0.3 * M), False),   # morning, busy -> -
         (12, "06:16", U, (2.0 * M, 0.3 * M), False),   # morning, not busy -> set
-        (12, "09:00", U, (0.2 * M, 0.1 * M), False),   # morning done -> -
+        RESTART,
+        (12, "09:00", U, (0.2 * M, 0.1 * M), False),   # morning done -> - (remembered)
         (12, "12:00", U, (5.0 * M, 1.0 * M), False),   # afternoon, not busy -> set
         (12, "18:30", U, (0.2 * M, 0.1 * M), False),   # evening -> set
         (12, "23:59", U, (0.2 * M, 0.1 * M), False),   # evening done -> -
@@ -260,10 +337,14 @@ if __name__ == "__main__":
     ]
     print(f"iperf job: server={job.server}:{job.port}, slots: "
           + ", ".join(f"{n} {a:02d}-{b:02d}" for n, a, b, _ in SLOTS) + " SAST\n")
-    for day, hhmm, s, bps, fail in steps:
+    for step in steps:
+        if step == RESTART:
+            job = new_job()
+            print("  -- restart: new job, reads the saved file --")
+            continue
+        day, hhmm, s, bps, fail = step
         h, m = map(int, hhmm.split(":"))
         t["wall"] = datetime(2026, 10, day, h, m, tzinfo=SAST)
-        t["mono"] = ((day - 12) * 24 * 60 + h * 60 + m) * 60.0
         fake_state.state, fake["bps"], fake["fail"] = s, bps, fail
         ran.clear()
         if job.should_run():
@@ -272,3 +353,6 @@ if __name__ == "__main__":
         what = ("SET " + ("(failed)" if fail else "(ok)")) if ran else "-"
         print(f"  {t['wall']:%d %H:%M} {slot[0] if slot else '(none)':<9} "
               f"{state.STATE_NAMES[s]:<14} in {bps[0] / M:>4.1f} Mbit/s -> {what}")
+
+    print(f"\nsaved file at the end (temporary, {tmp_file}):")
+    print(tmp_file.read_text())
