@@ -37,8 +37,19 @@ from typing import List, Optional
 # Target used when none is given on the command line.
 DEFAULT_TARGET = "8.8.8.8"
 
-# Safety limit so a stuck run cannot hang forever.
-RUN_TIMEOUT_S = 60.0
+# How long traceroute waits for each probe's reply (traceroute -w).
+# Measured on the Pi (traceroute 2.1.6, 30 hops, 3 probes, 16 sent at once):
+#   default wait, backhaul down (netem loss 100 %): 30.0 s
+#   -w 2,         backhaul down (netem loss 100 %): 12.0 s
+#   -w 2,         normal (11 hops to 8.8.8.8):       0.08 - 2.0 s
+# 2 s is the same wait ping uses (-W 2) and ~80x the slowest hop seen (25 ms).
+# Shorter matters because traceroute shares the active lane with ping:
+# while it runs, ping waits, so "backhaul back up" is noticed later.
+WAIT_S = 2
+
+# Safety limit so a stuck run cannot hang forever:
+# 2.5x the measured worst case (12 s).
+RUN_TIMEOUT_S = 30.0
 
 # Possible outcomes, stored in TracerouteResult.status
 STATUS_REACHED = "reached"            # the target itself replied normally (no "!" mark)
@@ -92,9 +103,10 @@ def run_traceroute(target: str = DEFAULT_TARGET) -> TracerouteResult:
 
     # `-n` prints IP addresses only (no DNS lookups), which is faster and
     # still works when DNS is unavailable during an outage.
+    # `-w` = seconds to wait for each probe (see WAIT_S above).
     try:
         proc = subprocess.run(
-            ["traceroute", "-n", target],
+            ["traceroute", "-n", "-w", str(WAIT_S), target],
             capture_output=True,
             text=True,
             timeout=RUN_TIMEOUT_S,
