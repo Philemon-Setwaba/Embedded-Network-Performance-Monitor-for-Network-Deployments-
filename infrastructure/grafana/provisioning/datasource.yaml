@@ -38,6 +38,9 @@ datasources:
     editable: false
 
     jsonData:
-      # How often our data arrives (ping every 30 s).
-      # Grafana uses this so graphs don't try to show gaps smaller than that.
-      timeInterval: 30s
+      # The smallest step our main data arrives in: SNMP, health and ping
+      # every 10 s. Grafana never asks for a query step smaller than this
+      # (it was 30s, so a graph could show only one point per 30 s - one
+      # of every three 10 s readings).
+      # (Wi-Fi is every 2 s: those panels set their own "min interval" 2s.)
+      timeInterval: 10s
