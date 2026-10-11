@@ -235,7 +235,8 @@ if __name__ == "__main__":
     def fake_test(self, test):
         ran.append(test)
         ok = not (test != iperf.TEST_UDP and fake["tcp_fails"])
-        return iperf.IperfResult(timestamp="x", test=test, server=self.server, port=self.port,
+        return iperf.IperfResult(timestamp=t["wall"].isoformat(), test=test,
+                                 server=self.server, port=self.port,
                                  duration_s=10, success=ok)
     IperfJob._one_test = fake_test
 
