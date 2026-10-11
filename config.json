@@ -20,5 +20,10 @@
     "target": "8.8.8.8",
     "count": 5,
     "interval_s": 10
+  },
+  "tcp": {
+    "target": "1.1.1.1",
+    "port": 443,
+    "timeout_s": 3
   }
 }
