@@ -14,8 +14,9 @@ TWO LANES, each in its own thread, running side by side:
                    state (after each new ping),
                    traceroute (only when the backhaul state calls for it:
                    on down, every 30 min while down, on back up,
-                   hourly baseline while up)
-                   (later: iperf3)
+                   hourly baseline while up),
+                   iperf (TCP once per night 00:00-05:00 SAST if the link was
+                   quiet 5 min; UDP at most hourly if not busy for 1 min)
                    send traffic over the link - ONE AT A TIME, never overlapping
 
 The state job (src/jobs/state.py) does not measure anything: it reads the
@@ -54,6 +55,7 @@ from src.jobs.ping_job import PingJob
 from src.jobs.tcp_job import TcpJob
 from src.jobs.state import StateJob
 from src.jobs.traceroute_job import TracerouteJob
+from src.jobs.iperf_job import IperfJob
 
 
 # Only one thread may print at a time, so lines never get mixed.
@@ -129,6 +131,7 @@ def build_lanes(stop_event: threading.Event):
     """The two lanes and their jobs. Add new jobs here."""
 
     # Jobs that other jobs read from are made first.
+    snmp_job = SnmpJob()
     wifi_job = WifiJob()
     ping_job = PingJob()
     tcp_job = TcpJob(ping_job)
@@ -136,7 +139,7 @@ def build_lanes(stop_event: threading.Event):
                          log=lambda m: log("active", m))
 
     passive = Lane("passive", [
-        SnmpJob(),        # every 10 s (config.json "snmp.interval_s")
+        snmp_job,         # every 10 s (config.json "snmp.interval_s")
         HealthJob(),      # every 10 s (config.json "health.interval_s"), same round as SNMP
         wifi_job,         # every 2 s  (config.json "wifi.interval_s")
     ], stop_event)
@@ -146,6 +149,7 @@ def build_lanes(stop_event: threading.Event):
         tcp_job,          # right after ping, ONLY when that ping got no reply
         state_job,        # right after ping and tcp, once per new ping
         TracerouteJob(state_job),  # right after state, ONLY when the state calls for it
+        IperfJob(state_job, snmp_job),  # TCP once per night + UDP hourly, only when safe
     ], stop_event)
 
     return [passive, active]
