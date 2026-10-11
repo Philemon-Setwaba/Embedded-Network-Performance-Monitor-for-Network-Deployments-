@@ -11,8 +11,11 @@ TWO LANES, each in its own thread, running side by side:
     passive lane:  snmp (10 s), health (10 s), wifi (2 s)
                    only read local values - never wait for an active test
     active lane:   ping (10 s), tcp (only after a ping with no reply),
-                   state (after each new ping)
-                   (later: traceroute, iperf3)
+                   state (after each new ping),
+                   traceroute (only when the backhaul state calls for it:
+                   on down, every 30 min while down, on back up,
+                   hourly baseline while up)
+                   (later: iperf3)
                    send traffic over the link - ONE AT A TIME, never overlapping
 
 The state job (src/jobs/state.py) does not measure anything: it reads the
@@ -21,7 +24,7 @@ link down. It prints a "STATE old -> new (why)" line only when the state
 CHANGES. (How full the link is, is shown in Grafana from the raw SNMP bps.)
 
 Why two lanes: an active test can take a long time (ping ~4-6 s, iperf3
-10-20 s, traceroute up to 60 s). With one lane, SNMP / health / Wi-Fi would
+10-20 s, traceroute up to ~12 s measured). With one lane, SNMP / health / Wi-Fi would
 pause for that long - exactly when you most want to see traffic and CPU.
 
 Inside each lane the rule is the same as before:
@@ -50,6 +53,7 @@ from src.jobs.wifi_job import WifiJob
 from src.jobs.ping_job import PingJob
 from src.jobs.tcp_job import TcpJob
 from src.jobs.state import StateJob
+from src.jobs.traceroute_job import TracerouteJob
 
 
 # Only one thread may print at a time, so lines never get mixed.
@@ -141,6 +145,7 @@ def build_lanes(stop_event: threading.Event):
         ping_job,         # every 10 s (config.json "ping.interval_s"), 5 packets
         tcp_job,          # right after ping, ONLY when that ping got no reply
         state_job,        # right after ping and tcp, once per new ping
+        TracerouteJob(state_job),  # right after state, ONLY when the state calls for it
     ], stop_event)
 
     return [passive, active]
