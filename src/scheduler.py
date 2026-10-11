@@ -10,9 +10,15 @@ TWO LANES, each in its own thread, running side by side:
 
     passive lane:  snmp (10 s), health (10 s), wifi (2 s)
                    only read local values - never wait for an active test
-    active lane:   ping (10 s), tcp (only after a ping with no reply)
+    active lane:   ping (10 s), tcp (only after a ping with no reply),
+                   state (after each new ping)
                    (later: traceroute, iperf3)
                    send traffic over the link - ONE AT A TIME, never overlapping
+
+The state job (src/jobs/state.py) does not measure anything: it reads the
+latest ping, tcp and wifi results and decides backhaul up / down / local
+link down. It prints a "STATE old -> new (why)" line only when the state
+CHANGES. (How full the link is, is shown in Grafana from the raw SNMP bps.)
 
 Why two lanes: an active test can take a long time (ping ~4-6 s, iperf3
 10-20 s, traceroute up to 60 s). With one lane, SNMP / health / Wi-Fi would
@@ -25,7 +31,8 @@ Inside each lane the rule is the same as before:
   - timing does not drift; a late run does not cause a burst of catch-up runs
 
 Why it is safe: each job belongs to ONE lane only, so no two threads ever
-run the same job. Printing uses a lock so lines from the two lanes never mix.
+run the same job. The state job reads wifi's latest result from the other
+lane, but only READS it. Printing uses a lock so lines from the two lanes never mix.
 
 How to run (from the project folder ~/embedded-network-monitor):
     python3 -m src.scheduler
@@ -42,6 +49,7 @@ from src.jobs.health_job import HealthJob
 from src.jobs.wifi_job import WifiJob
 from src.jobs.ping_job import PingJob
 from src.jobs.tcp_job import TcpJob
+from src.jobs.state import StateJob
 
 
 # Only one thread may print at a time, so lines never get mixed.
@@ -116,16 +124,23 @@ class Lane:
 def build_lanes(stop_event: threading.Event):
     """The two lanes and their jobs. Add new jobs here."""
 
+    # Jobs that other jobs read from are made first.
+    wifi_job = WifiJob()
+    ping_job = PingJob()
+    tcp_job = TcpJob(ping_job)
+    state_job = StateJob(ping_job, tcp_job, wifi_job,
+                         log=lambda m: log("active", m))
+
     passive = Lane("passive", [
-        SnmpJob(),      # every 10 s (config.json "snmp.interval_s")
-        HealthJob(),    # every 10 s (config.json "health.interval_s"), same round as SNMP
-        WifiJob(),      # every 2 s  (config.json "wifi.interval_s")
+        SnmpJob(),        # every 10 s (config.json "snmp.interval_s")
+        HealthJob(),      # every 10 s (config.json "health.interval_s"), same round as SNMP
+        wifi_job,         # every 2 s  (config.json "wifi.interval_s")
     ], stop_event)
 
-    ping_job = PingJob()
     active = Lane("active", [
-        ping_job,           # every 10 s (config.json "ping.interval_s"), 5 packets
-        TcpJob(ping_job),   # right after ping, ONLY when that ping got no reply
+        ping_job,         # every 10 s (config.json "ping.interval_s"), 5 packets
+        tcp_job,          # right after ping, ONLY when that ping got no reply
+        state_job,        # right after ping and tcp, once per new ping
     ], stop_event)
 
     return [passive, active]
