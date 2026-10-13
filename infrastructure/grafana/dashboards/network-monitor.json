@@ -5,8 +5,8 @@
     "name": "ad6lfd4",
     "namespace": "default",
     "uid": "7d066271-e89b-48e6-91a1-3faa0c2af0d6",
-    "resourceVersion": "1791782843888019",
-    "generation": 50,
+    "resourceVersion": "1791851283618991",
+    "generation": 126,
     "creationTimestamp": "2026-10-06T18:17:55Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "4354816846905344"
@@ -16,12 +16,11 @@
       "grafana.app/managedBy": "classic-file-provisioning",
       "grafana.app/managerAllowsEdits": "true",
       "grafana.app/managerId": "network-monitor",
-      "grafana.app/saved-from-ui": "Grafana v13.2.3 (90ffed056f)",
-      "grafana.app/sourceChecksum": "88ee685b15dfbbe5b76361511ea685b0",
+      "grafana.app/sourceChecksum": "c2a0432c189a4f3d0b6f4e385df40181",
       "grafana.app/sourcePath": "/var/lib/grafana/dashboards/network-monitor/network-monitor.json",
-      "grafana.app/sourceTimestamp": "1791723071000",
-      "grafana.app/updatedBy": "user:ag0c8wk6nehoga",
-      "grafana.app/updatedTimestamp": "2026-10-12T05:27:23Z"
+      "grafana.app/sourceTimestamp": "1791783419000",
+      "grafana.app/updatedBy": "access-policy:service",
+      "grafana.app/updatedTimestamp": "2026-10-13T00:28:03Z"
     }
   },
   "spec": {
