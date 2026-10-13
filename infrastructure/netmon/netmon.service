@@ -1,0 +1,36 @@
+# infrastructure/netmon/netmon.service
+#
+# systemd service that runs the monitor's scheduler (src/scheduler.py).
+#   - starts on boot
+#   - restarts it 10 s after a crash
+#   - keeps everything it prints:  journalctl -u netmon
+#
+# Do not copy this file by hand: install.sh fills in __USER__ and __REPO__
+# and installs it.  (sudo bash infrastructure/netmon/install.sh)
+
+[Unit]
+Description=Embedded network monitor (scheduler)
+# Start after the network is up and after VictoriaMetrics and vmagent
+# (where it sends data). If either is not running, the scheduler still
+# runs: a failed push is only logged.
+Wants=network-online.target
+After=network-online.target victoria.service vmagent.service
+
+[Service]
+Type=simple
+# Run as the normal user, not root (safer; ping, traceroute, vcgencmd and
+# iperf3 all work as this user).
+User=__USER__
+WorkingDirectory=__REPO__
+# -m src.scheduler = the same command we run by hand.
+ExecStart=/usr/bin/python3 -m src.scheduler
+# Print straight away (otherwise Python holds prints back and journalctl
+# shows them late).
+Environment=PYTHONUNBUFFERED=1
+# If it stops for any reason, start it again after 10 s.
+Restart=always
+RestartSec=10
+
+[Install]
+# Start on boot.
+WantedBy=multi-user.target
