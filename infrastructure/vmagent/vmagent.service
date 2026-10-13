@@ -1,0 +1,57 @@
+# infrastructure/vmagent/vmagent.service
+#
+# systemd service for vmagent = the STORE-AND-FORWARD part.
+#   - the scheduler pushes every measurement to vmagent (127.0.0.1:8429)
+#   - vmagent sends it to the remote VictoriaMetrics (laptop / central server)
+#   - if the remote cannot be reached, vmagent keeps the data and retries,
+#     then sends it when the remote is back
+#   - starts on boot, restarts 10 s after a crash
+#   - logs:  journalctl -u vmagent
+#
+# Do not copy this file by hand: install.sh fills in __USER__, __HOST__ and
+# __PORT__ (from config.json "remote") and installs it.
+#   sudo bash infrastructure/vmagent/install.sh
+#
+# Why a NAME (__HOST__, e.g. netmon-receiver) and not an IP:
+#   vmagent names its disk-buffer folder after the remote URL. If the URL
+#   changed (new laptop IP), data still waiting in the old folder would not
+#   be sent. With a fixed name the URL never changes; only /etc/hosts
+#   (set_receiver.sh) changes when the IP changes.
+
+[Unit]
+Description=vmagent - store-and-forward to the remote VictoriaMetrics
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+
+# systemd creates /var/lib/vmagent (owned by __USER__) and keeps it
+# across reboots. This is where vmagent stores data it could not send yet.
+StateDirectory=vmagent
+
+# -httpListenAddr=127.0.0.1:8429
+#     Only programs on the Pi itself can send to vmagent (the docs say it
+#     "is expected that vmagent runs in an isolated, trusted network").
+# -remoteWrite.url
+#     The remote VictoriaMetrics. Port must stay the same as config.json.
+# -remoteWrite.tmpDataPath=/var/lib/vmagent
+#     The disk buffer (survives reboots).
+# -remoteWrite.maxDiskUsagePerURL=1GB
+#     TEMPORARY value: the most disk the buffer may use. When full, vmagent
+#     drops the OLDEST buffered data. Docs: minimum 500 MiB per URL, use a
+#     multiple of 500 MB. Will be set from the measured bytes per day.
+# (-remoteWrite.rateLimit will be added after measuring.)
+ExecStart=/usr/local/bin/vmagent \
+  -httpListenAddr=127.0.0.1:8429 \
+  -remoteWrite.url=http://__HOST__:__PORT__/api/v1/write \
+  -remoteWrite.tmpDataPath=/var/lib/vmagent \
+  -remoteWrite.maxDiskUsagePerURL=1GB
+
+# If it stops for any reason, start it again after 10 s.
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
