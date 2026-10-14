@@ -39,7 +39,7 @@ from typing import Dict, List, Optional, Tuple
 # Services to check with `systemctl is-active`.
 # "netmon" is the scheduler service; it shows as not running until we
 # create that service later.
-DEFAULT_SERVICES = ["victoria", "grafana-server", "snmpd", "netmon"]
+DEFAULT_SERVICES = ["victoria", "grafana-server", "snmpd", "netmon", "vmagent"]
 
 # Safety limit for each small system command.
 COMMAND_TIMEOUT_S = 3.0
