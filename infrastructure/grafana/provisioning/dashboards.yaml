@@ -26,7 +26,7 @@ providers:
     allowUiUpdates: true
 
     # Check the folder for new or changed .json files every 30 seconds.
-    updateIntervalSeconds: 30
+    updateIntervalSeconds: 86400
 
     options:
       # The folder Grafana reads the .json files from.

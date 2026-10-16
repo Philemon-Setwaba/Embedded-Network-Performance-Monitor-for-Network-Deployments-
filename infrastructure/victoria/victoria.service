@@ -19,7 +19,8 @@ ExecStart=/usr/local/bin/victoria-metrics \
   -retentionPeriod=12 \
   -httpListenAddr=0.0.0.0:8428 \
   -memory.allowedPercent=60 \
-  -loggerFormat=json
+  -loggerFormat=json \
+  -promscrape.config=/etc/victoria/scrape.yml
 
 # Automatically restart if VictoriaMetrics crashes
 Restart=on-failure
