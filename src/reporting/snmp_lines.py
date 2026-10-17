@@ -6,7 +6,7 @@ text that VictoriaMetrics understands.
 
 It only translates. It does NOT send - victoria.py does that.
 
-Lines produced (labels on every line: device, target, if_index):
+Lines produced (labels on every line: device, target, interface):
     snmp_status             0 / 1 / 2  always - see STATUS CODES below
     snmp_reachable          1 / 0      always (1 = the agent sent a reply)
     snmp_in_octets_total    bytes      if counters were read (raw counter)
@@ -70,11 +70,14 @@ def to_lines(result: "snmp_module.SNMPPollResult") -> List[str]:
     ts = line_format.to_ms(result.timestamp)
 
     # The labels that go on every line.
-    # if_index is turned into text ("3") because labels are always text.
+    # "interface" is the interface NAME (e.g. "lte0"), not its number:
+    # on the Mercusys router the number changed (8 -> 18 -> 8) while the
+    # router stayed up, which would split one interface into several
+    # series. Without a configured name, "index<n>" is used instead.
     labels = {
         "device": line_format.DEVICE,
         "target": result.target,
-        "if_index": str(result.if_index),
+        "interface": result.if_name or f"index{result.if_index}",
     }
 
     # Work out the status number (see STATUS CODES above).
