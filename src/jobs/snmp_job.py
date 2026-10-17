@@ -65,7 +65,8 @@ class SnmpJob:
 
         # One poller for the whole run: it remembers the previous counters,
         # which it needs to work out bits per second.
-        self.poller = snmp.SNMPPoller(target=target, if_index=if_index, community=community)
+        self.poller = snmp.SNMPPoller(target=target, if_index=if_index, community=community,
+                                      if_name=snmp.load_snmp_interface_name())
 
         # How often scheduler.py should call run().
         self.interval_s = load_interval_s("snmp", DEFAULT_INTERVAL_S)
