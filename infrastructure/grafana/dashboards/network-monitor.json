@@ -27,7 +27,7 @@
       }
     ],
     "cursorSync": "Off",
-    "description": "Live network performance of the embedded monitor (Raspberry Pi 5). Shows latency, packet loss and reachability (ping), with throughput, Wi-Fi signal, interface traffic, TCP fallback and path (traceroute) to be added. Data: VictoriaMetrics on the Pi, pushed by src/scheduler.py every 30 s. EEE4022S, UCT.",
+    "description": "Network performance of the embedded monitor (Raspberry Pi 5) connected over Wi-Fi (MERCUSYS_ECD5_5G) to a Mercusys MB135-4G router with a Vodacom LTE backhaul. Ping every 10 s (TCP check when ping fails), router LTE traffic over SNMP every 10 s, Wi-Fi every 2 s, Pi health every 10 s, traceroute and iperf3 on a schedule. Data: VictoriaMetrics on the Pi; vmagent forwards a copy to the laptop receiver (Store-and-forward tab). EEE4022S, UCT.",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -74,7 +74,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   ping_rtt_min_ms{device=\"$device\", target=\"$target\"}",
+                        "expr": "ping_rtt_min_ms{device=\"$device\", target=\"$target\"}",
                         "instant": false,
                         "legendFormat": "min",
                         "range": true
@@ -96,7 +96,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   ping_rtt_max_ms{device=\"$device\", target=\"$target\"}",
+                        "expr": "ping_rtt_max_ms{device=\"$device\", target=\"$target\"}",
                         "instant": false,
                         "legendFormat": "max",
                         "range": true
@@ -296,7 +296,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "ping_loss_pct{device=\"$device\", target=\"$target\"}",
-                        "legendFormat": "__auto",
+                        "legendFormat": "Loss",
                         "range": true
                       }
                     },
@@ -365,7 +365,7 @@
         "spec": {
           "id": 12,
           "title": "Download use now",
-          "description": "The 10 mbit/s reference download link (inethi) in use now, from snmp every 10 s. yellow from 50 %, red from 70 %. includes the monitor’s own iperf3 tests. on eduroam it can go above 100 %, because eduroam is faster than the reference.",
+          "description": "Share of the 10 Mbit/s iNethi reference download link in use now, from the Mercusys router's LTE interface (lte0) over SNMP every 10 s. Yellow from 50 %, red from 70 %. It can go above 100 % if the LTE link is faster than the reference.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -384,7 +384,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "snmp_in_bps{device=\"$device\"} / 10000000 * 100",
-                        "legendFormat": "__auto",
+                        "legendFormat": "LTE backhaul ({{interface}})",
                         "range": true
                       }
                     },
@@ -457,7 +457,7 @@
         "spec": {
           "id": 13,
           "title": "Upload use now",
-          "description": "The 5 mbit/s reference upload link (inethi) in use now, from snmp every 10 s. yellow from 50 %, red from 70 %. includes the monitor’s own iperf3 tests. on eduroam it can go above 100 %.",
+          "description": "Share of the 5 Mbit/s iNethi reference upload link in use now, from the Mercusys router's LTE interface (lte0) over SNMP every 10 s. Yellow from 50 %, red from 70 %. It can go above 100 % if the LTE link is faster than the reference.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -476,7 +476,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "snmp_out_bps{device=\"$device\"} / 5000000 * 100",
-                        "legendFormat": "__auto",
+                        "legendFormat": "LTE backhaul ({{interface}})",
                         "range": true
                       }
                     },
@@ -656,7 +656,7 @@
                         "exemplar": false,
                         "expr": "monitor_backhaul_state{device=\"$device\"}",
                         "instant": false,
-                        "legendFormat": "{{Backhaul}}",
+                        "legendFormat": "Backhaul",
                         "range": true
                       }
                     },
@@ -692,16 +692,11 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "displayName": "Backhual",
+                  "displayName": "Backhaul",
                   "mappings": [
                     {
                       "type": "value",
                       "options": {
-                        "-1": {
-                          "text": "Unknown",
-                          "color": "super-light-blue",
-                          "index": 3
-                        },
                         "0": {
                           "text": "Backhaul up",
                           "color": "dark-green",
@@ -716,6 +711,11 @@
                           "text": "Local link down",
                           "color": "dark-orange",
                           "index": 2
+                        },
+                        "-1": {
+                          "text": "Unknown",
+                          "color": "super-light-blue",
+                          "index": 3
                         }
                       }
                     }
@@ -760,7 +760,7 @@
         "spec": {
           "id": 16,
           "title": "Download speed",
-          "description": "download through the pi’s wi-fi (wlan0), from snmp every 10 s. dashed lines: 5 mbit/s (yellow, 50 %) and 7 mbit/s (red, 70 %) of the 10 mbit/s inethi reference",
+          "description": "Download on the Mercusys router's LTE interface (lte0), read from the router over SNMP every 10 s. Dashed lines: 5 Mbit/s (yellow, 50 %) and 7 Mbit/s (red, 70 %) of the 10 Mbit/s iNethi reference.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -778,7 +778,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  snmp_in_bps{device=\"$device\"}",
+                        "expr": "snmp_in_bps{device=\"$device\"}",
                         "legendFormat": "download",
                         "range": true
                       }
@@ -880,7 +880,7 @@
         "spec": {
           "id": 17,
           "title": "Upload speed",
-          "description": "Upload through the pi’s wi-fi (wlan0), from snmp every 10 s. dashed lines: 2.5 mbit/s (yellow, 50 %) and 3.5 mbit/s (red, 70 %) of the 5 mbit/s inethi reference.",
+          "description": "Upload on the Mercusys router's LTE interface (lte0), read from the router over SNMP every 10 s. Dashed lines: 2.5 Mbit/s (yellow, 50 %) and 3.5 Mbit/s (red, 70 %) of the 5 Mbit/s iNethi reference.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -898,7 +898,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   snmp_out_bps{device=\"$device\"}",
+                        "expr": "snmp_out_bps{device=\"$device\"}",
                         "legendFormat": "Upload speed",
                         "range": true
                       }
@@ -1000,7 +1000,7 @@
         "spec": {
           "id": 18,
           "title": "Link full (1 minute)",
-          "description": "red = the link was full for at least 1 whole minute (≥ 70 % of the inethi reference: 7 mbit/s down, 3.5 mbit/s up). short bursts are not shown. check the iperf3 panel below: our own tests can also fill the link.",
+          "description": "Red = the router's LTE link was full for at least 1 whole minute (≥ 70 % of the iNethi reference: 7 Mbit/s down, 3.5 Mbit/s up). Short bursts are not shown. The monitor's own iperf3 tests go to the laptop on the same Mercusys LAN, so they do not use the LTE link and do not cause these blocks.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1018,7 +1018,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  min_over_time(snmp_in_bps{device=\"$device\"}[1m]) >= bool 7000000",
+                        "expr": "min_over_time(snmp_in_bps{device=\"$device\"}[1m]) >= bool 7000000",
                         "legendFormat": "Download",
                         "range": true
                       }
@@ -1039,7 +1039,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  min_over_time(snmp_out_bps{device=\"$device\"}[1m]) >= bool 3500000",
+                        "expr": "min_over_time(snmp_out_bps{device=\"$device\"}[1m]) >= bool 3500000",
                         "instant": false,
                         "legendFormat": "Upload",
                         "range": true
@@ -1130,7 +1130,7 @@
         "spec": {
           "id": 19,
           "title": "Monitor's own iperf3 tests",
-          "description": "purple = the monitor’s own speed test (iperf3) was running. it fills the link for about 10 s per test, 4 times a day, so traffic and “full” blocks at the same time are caused by the monitor, not by users.",
+          "description": "Purple = the monitor's own speed test (iperf3) was running (about 10 s per test, up to 4 times a day). The server is the laptop on the same Mercusys LAN, so the test stays on the local Wi-Fi and does not use the LTE link.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1190,12 +1190,12 @@
                       "type": "value",
                       "options": {
                         "0": {
-                          "text": "\tnot running",
+                          "text": "not running",
                           "color": "super-light-blue",
                           "index": 0
                         },
                         "1": {
-                          "text": "\tour test running",
+                          "text": "our test running",
                           "color": "dark-purple",
                           "index": 1
                         }
@@ -1260,7 +1260,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   ping_loss_pct{device=\"$device\", target=\"$target\"}",
+                        "expr": "ping_loss_pct{device=\"$device\", target=\"$target\"}",
                         "legendFormat": "{{target}}",
                         "range": true
                       }
@@ -1367,7 +1367,7 @@
         "spec": {
           "id": 20,
           "title": "TCP speed (iperf3)",
-          "description": "Highest speed the link carried during the monitor’s iperf3 test (10 s each way), up to 4 times a day. night = link capacity; day = speed left over while people use the link.",
+          "description": "Highest speed during the monitor's iperf3 test to the laptop on the same Mercusys LAN (10 s each way), up to 4 times a day. The test goes Pi → router → laptop over Wi-Fi, so it measures the local network, not the LTE backhaul.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1385,7 +1385,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  max_over_time(iperf_throughput_mbps{device=\"$device\", test=\"tcp_upload\"}[$__interval])",
+                        "expr": "max_over_time(iperf_throughput_mbps{device=\"$device\", test=\"tcp_upload\"}[$__interval])",
                         "legendFormat": "{{test}}",
                         "range": true
                       }
@@ -1407,7 +1407,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "  max_over_time(iperf_throughput_mbps{device=\"$device\", test=\"tcp_download\"}[$__interval])",
+                        "expr": "max_over_time(iperf_throughput_mbps{device=\"$device\", test=\"tcp_download\"}[$__interval])",
                         "instant": false,
                         "legendFormat": "{{test}}",
                         "range": true
@@ -1520,7 +1520,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   max_over_time(iperf_jitter_ms{device=\"$device\", test=\"udp\"}[$__interval])",
+                        "expr": "max_over_time(iperf_jitter_ms{device=\"$device\", test=\"udp\"}[$__interval])",
                         "legendFormat": "Jitter",
                         "range": true
                       }
@@ -1658,7 +1658,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   max_over_time(iperf_lost_pct{device=\"$device\", test=\"udp\"}[$__interval])",
+                        "expr": "max_over_time(iperf_lost_pct{device=\"$device\", test=\"udp\"}[$__interval])",
                         "legendFormat": "Loss",
                         "range": true
                       }
@@ -1796,7 +1796,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "\tlast_over_time(iperf_retransmits{device=\"$device\"}[1d])",
+                        "expr": "last_over_time(iperf_retransmits{device=\"$device\"}[1d])",
                         "format": "table",
                         "instant": true,
                         "legendFormat": "__auto",
@@ -1892,7 +1892,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "\ttlast_over_time(iperf_success{device=\"$device\"}[1d]) * 1000",
+                        "expr": "last_over_time(iperf_success{device=\"$device\"}[1d]) * 1000",
                         "format": "table",
                         "instant": true,
                         "legendFormat": "__auto",
@@ -2092,7 +2092,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   ping_rtt_mdev_ms{device=\"$device\", target=\"$target\"}",
+                        "expr": "ping_rtt_mdev_ms{device=\"$device\", target=\"$target\"}",
                         "legendFormat": "mdev",
                         "range": true
                       }
@@ -2209,7 +2209,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   tcp_status{device=\"$device\"}",
+                        "expr": "tcp_status{device=\"$device\"}",
                         "legendFormat": "{{target}}",
                         "range": true
                       }
@@ -2332,7 +2332,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   max_over_time(traceroute_status{device=\"$device\"}[$__interval])",
+                        "expr": "max_over_time(traceroute_status{device=\"$device\"}[$__interval])",
                         "legendFormat": "__auto",
                         "range": true
                       }
@@ -2438,7 +2438,7 @@
         "spec": {
           "id": 27,
           "title": "last hop that replied",
-          "description": "Number of the last router on the path to 8.8.8.8 that replied. normal = 10-11 (8.8.8.8 itself). a lower number during an outage shows where along the path the replies stopped.",
+          "description": "Number of the last router on the path to 8.8.8.8 that replied. Normal = the hop number of 8.8.8.8 itself in the hourly baseline traceroute. A lower number during an outage shows where along the path the replies stopped.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2456,7 +2456,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   max_over_time(traceroute_hops_reached{device=\"$device\"}[$__interval])",
+                        "expr": "max_over_time(traceroute_hops_reached{device=\"$device\"}[$__interval])",
                         "legendFormat": "How far the replies got",
                         "range": true
                       }
@@ -2704,7 +2704,7 @@
         "spec": {
           "id": 29,
           "title": "Wi-Fi signal strength",
-          "description": "Signal strength the pi receives from its access point, measured every 2 s. closer to 0 is stronger (e.g. -50 dBm is better than -75 dBm). a sudden drop or gap can explain loss or a local link down.",
+          "description": "Signal strength the Pi receives from the Mercusys router (MERCUSYS_ECD5_5G), measured every 2 s. Closer to 0 is stronger (e.g. -50 dBm is better than -75 dBm). A sudden drop or gap can explain loss or a local link down.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2722,7 +2722,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   wifi_signal_dbm{device=\"$device\"}",
+                        "expr": "wifi_signal_dbm{device=\"$device\"}",
                         "interval": "",
                         "legendFormat": "Wi-Fi signal",
                         "range": true
@@ -2819,7 +2819,7 @@
         "spec": {
           "id": 30,
           "title": "Wi-Fi connected?",
-          "description": "Is the pi connected to its wi-fi access point? checked every 2 s. red = the pi’s own wi-fi was down, so the internet link could not be checked (local link down), not a backhaul failure.",
+          "description": "Is the Pi connected to the Mercusys router's Wi-Fi (MERCUSYS_ECD5_5G)? Checked every 2 s. Red = the Pi's own Wi-Fi was down, so the internet link could not be checked (local link down), not a backhaul failure.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2837,7 +2837,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   wifi_status{device=\"$device\"}",
+                        "expr": "wifi_status{device=\"$device\"}",
                         "legendFormat": "wlan0",
                         "range": true
                       }
@@ -2934,7 +2934,7 @@
         "spec": {
           "id": 31,
           "title": "Which access point (BSSID)",
-          "description": "Which wi-fi access point the pi was connected to. each row is one access point (its bssid). a change from one row to another = the pi moved to another access point; a drop at the same time can explain a local link down.",
+          "description": "Which access point (BSSID) the Pi was connected to. On the Mercusys router this should be one row (08:8a:f1:cc:ec:d5). A new row means the Pi joined a different access point; a drop at the same time can explain a local link down.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2952,7 +2952,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   wifi_link_info{device=\"$device\"}",
+                        "expr": "wifi_link_info{device=\"$device\"}",
                         "legendFormat": "{{bssid}}",
                         "range": true
                       }
@@ -3039,7 +3039,7 @@
         "spec": {
           "id": 32,
           "title": "Wi-Fi channel (frequency)",
-          "description": "Rdio frequency the pi uses to talk to its access point. a step up or down = the access point changed channel; devices can briefly drop when that happens.",
+          "description": "Radio frequency the Pi uses to talk to the Mercusys router. A step up or down = the router changed channel; devices can briefly drop when that happens.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -3057,7 +3057,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   wifi_freq_mhz{device=\"$device\"}",
+                        "expr": "wifi_freq_mhz{device=\"$device\"}",
                         "legendFormat": "channel",
                         "range": true
                       }
@@ -3205,7 +3205,7 @@
         "spec": {
           "id": 33,
           "title": "Wi-Fi link rate",
-          "description": "The speed the pi’s radio and the access point agreed to use (from iw), every 2 s. it shows radio quality, not internet speed: the real internet speed is in the throughput tab.",
+          "description": "The speed the Pi's radio and the Mercusys router agreed to use (from iw), every 2 s. It shows radio quality, not internet speed: the real internet speed is in the Throughput tab.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -3223,7 +3223,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  wifi_rx_bitrate_mbps{device=\"$device\"}",
+                        "expr": "wifi_rx_bitrate_mbps{device=\"$device\"}",
                         "legendFormat": "receive (RX)",
                         "range": true
                       }
@@ -3244,7 +3244,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "  wifi_tx_bitrate_mbps{device=\"$device\"}",
+                        "expr": "wifi_tx_bitrate_mbps{device=\"$device\"}",
                         "instant": false,
                         "legendFormat": "send (TX)",
                         "range": true
@@ -3344,7 +3344,7 @@
         "spec": {
           "id": 34,
           "title": "Services",
-          "description": "Is each program the monitor needs running? Checked with systemctl every 10 s. netmon shows down until its systemd service is installed.",
+          "description": "Is each program the monitor needs running? Checked with systemctl every 10 s.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -3362,7 +3362,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_service_up{device=\"$device\"}",
+                        "expr": "pi_service_up{device=\"$device\"}",
                         "legendFormat": "{{service}}",
                         "range": true
                       }
@@ -3460,7 +3460,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "   pi_throttled{device=\"$device\", when=\"now\"}",
+                        "expr": "pi_throttled{device=\"$device\", when=\"now\"}",
                         "instant": false,
                         "legendFormat": "{{flag}}",
                         "range": true
@@ -3569,7 +3569,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_cpu_temp_celsius{device=\"$device\"}",
+                        "expr": "pi_cpu_temp_celsius{device=\"$device\"}",
                         "legendFormat": "CPU temperature",
                         "range": true
                       }
@@ -3694,7 +3694,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_cpu_freq_mhz{device=\"$device\"}",
+                        "expr": "pi_cpu_freq_mhz{device=\"$device\"}",
                         "legendFormat": "CPU frequency",
                         "range": true
                       }
@@ -3812,7 +3812,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_input_voltage_v{device=\"$device\"}",
+                        "expr": "pi_input_voltage_v{device=\"$device\"}",
                         "legendFormat": "Input voltage",
                         "range": true
                       }
@@ -3935,7 +3935,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_cpu_usage_pct{device=\"$device\"}",
+                        "expr": "pi_cpu_usage_pct{device=\"$device\"}",
                         "legendFormat": "CPU use",
                         "range": true
                       }
@@ -3956,7 +3956,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_load_avg{device=\"$device\", period=\"1m\"} / on(device) pi_cpu_cores{device=\"$device\"}",
+                        "expr": "pi_load_avg{device=\"$device\", period=\"1m\"} / on(device) pi_cpu_cores{device=\"$device\"}",
                         "instant": false,
                         "legendFormat": "Load per core (1 min)",
                         "range": true
@@ -4100,7 +4100,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "   pi_memory_used_pct{device=\"$device\"}",
+                        "expr": "pi_memory_used_pct{device=\"$device\"}",
                         "instant": false,
                         "legendFormat": "Memory used",
                         "range": true
@@ -4123,7 +4123,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "   pi_disk_used_pct{device=\"$device\", mount=\"/\"}",
+                        "expr": "pi_disk_used_pct{device=\"$device\", mount=\"/\"}",
                         "instant": false,
                         "legendFormat": "SD card used (/)",
                         "range": true
@@ -4227,7 +4227,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_uptime_seconds{device=\"$device\"}",
+                        "expr": "pi_uptime_seconds{device=\"$device\"}",
                         "legendFormat": "{{device}}",
                         "range": true
                       }
@@ -4313,7 +4313,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "   resets(pi_uptime_seconds{device=\"$device\"}[$__range])",
+                        "expr": "resets(pi_uptime_seconds{device=\"$device\"}[$__range])",
                         "instant": true,
                         "legendFormat": "__auto",
                         "range": false
@@ -4400,7 +4400,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_clock_synced{device=\"$device\"}",
+                        "expr": "pi_clock_synced{device=\"$device\"}",
                         "legendFormat": "Clock synced",
                         "range": true
                       }
@@ -4421,7 +4421,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "   pi_rootfs_writable{device=\"$device\"}",
+                        "expr": "pi_rootfs_writable{device=\"$device\"}",
                         "instant": false,
                         "legendFormat": "SD card writable",
                         "range": true
@@ -4524,7 +4524,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "   pi_health_error_info{device=\"$device\"}",
+                        "expr": "pi_health_error_info{device=\"$device\"}",
                         "format": "table",
                         "instant": true,
                         "legendFormat": "__auto",
@@ -4577,6 +4577,565 @@
                       "reducers": []
                     },
                     "inspect": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-45": {
+        "kind": "Panel",
+        "spec": {
+          "id": 45,
+          "title": "Backhaul state",
+          "description": "State of the backhaul as decided by the monitor: Up = ping or TCP check succeeded; Down = both failed for 2 checks in a row; Local link down = the Pi's own Wi-Fi is not connected.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "monitor_backhaul_state",
+                        "legendFormat": "Backhaul",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "state-timeline",
+            "version": "13.2.3",
+            "spec": {
+              "options": {
+                "alignValue": "left",
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "auto",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "Up",
+                          "color": "dark-green",
+                          "index": 1
+                        },
+                        "1": {
+                          "text": "Down",
+                          "color": "dark-red",
+                          "index": 2
+                        },
+                        "2": {
+                          "text": "Local link down",
+                          "color": "dark-orange",
+                          "index": 3
+                        },
+                        "-1": {
+                          "text": "Unknown",
+                          "color": "super-light-blue",
+                          "index": 0
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "continuous-GrYlRd"
+                  },
+                  "custom": {
+                    "axisPlacement": "auto",
+                    "fillOpacity": 70,
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineWidth": 0,
+                    "spanNulls": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-46": {
+        "kind": "Panel",
+        "spec": {
+          "id": 46,
+          "title": "Data waiting to be sent",
+          "description": "Size of vmagent's on-disk buffer. Stays near 0 while the laptop receiver is reachable, grows during an outage, and falls back to 0 once the buffered data has been sent.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "vmagent_remotewrite_pending_data_bytes",
+                        "legendFormat": "Buffered data",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.3",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "decbytes",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 500000000,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 900000000,
+                        "color": "dark-red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds",
+                    "fixedColor": "super-light-blue",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 57,
+                    "gradientMode": "hue",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "dashed"
+                    },
+                    "axisSoftMax": 1000000000
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-47": {
+        "kind": "Panel",
+        "spec": {
+          "id": 47,
+          "title": "Sent to remote receiver",
+          "description": "Rate at which vmagent sends data to the laptop receiver, measured between consecutive 15 s samples. Normally a few hundred B/s; a short spike after an outage shows the buffered backlog being sent.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(irate(vmagent_remotewrite_bytes_sent_total[1m]))",
+                        "legendFormat": "Sent",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "15"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.3",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "binBps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "dark-purple"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "dark-orange"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-48": {
+        "kind": "Panel",
+        "spec": {
+          "id": 48,
+          "title": "Failed send attempts",
+          "description": "Number of failed attempts to send data to the receiver in each 5-minute window. Non-zero while the receiver or backhaul is down; vmagent retries automatically.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(increase(vmagent_remotewrite_push_failures_total[5m]))",
+                        "legendFormat": "Failures",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.3",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "dark-red"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "bars",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-49": {
+        "kind": "Panel",
+        "spec": {
+          "id": 49,
+          "title": "Dropped data",
+          "description": "Data vmagent has discarded instead of delivering: blocks rejected by the receiver (HTTP 400/409) or samples dropped. Any value above 0 means data was lost.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "victoriametrics"
+                      },
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "(sum(vmagent_remotewrite_packets_dropped_total) or vector(0)) + (sum(vmagent_remotewrite_samples_dropped_total) or vector(0))",
+                        "legendFormat": "Dropped",
+                        "range": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.3",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds",
+                    "fixedColor": "#ad46ff"
                   }
                 },
                 "overrides": []
@@ -4649,11 +5208,6 @@
                     {
                       "type": "value",
                       "options": {
-                        "-1": {
-                          "text": "unknown",
-                          "color": "super-light-blue",
-                          "index": 6
-                        },
                         "0": {
                           "text": "Ok",
                           "color": "dark-green",
@@ -4683,6 +5237,11 @@
                           "text": "Could not run",
                           "color": "dark-purple",
                           "index": 5
+                        },
+                        "-1": {
+                          "text": "unknown",
+                          "color": "super-light-blue",
+                          "index": 6
                         }
                       }
                     }
@@ -4940,11 +5499,6 @@
                     {
                       "type": "value",
                       "options": {
-                        "-1": {
-                          "text": "Unknown",
-                          "color": "super-light-blue",
-                          "index": 3
-                        },
                         "0": {
                           "text": "Backhaul up",
                           "color": "dark-green",
@@ -4959,6 +5513,11 @@
                           "text": "Local link down",
                           "color": "dark-orange",
                           "index": 2
+                        },
+                        "-1": {
+                          "text": "Unknown",
+                          "color": "super-light-blue",
+                          "index": 3
                         }
                       }
                     }
@@ -5017,7 +5576,46 @@
                       "spec": {
                         "x": 0,
                         "y": 3,
-                        "width": 19,
+                        "width": 5,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-14"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 5,
+                        "y": 3,
+                        "width": 5,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-11"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 10,
+                        "y": 3,
+                        "width": 14,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-10"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 7,
+                        "width": 24,
                         "height": 3,
                         "element": {
                           "kind": "ElementReference",
@@ -5028,21 +5626,8 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 19,
-                        "y": 3,
-                        "width": 5,
-                        "height": 3,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-14"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
                         "x": 0,
-                        "y": 6,
+                        "y": 10,
                         "width": 12,
                         "height": 4,
                         "element": {
@@ -5055,38 +5640,12 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 6,
+                        "y": 10,
                         "width": 12,
                         "height": 4,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-12"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 0,
-                        "y": 10,
-                        "width": 12,
-                        "height": 4,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-11"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 12,
-                        "y": 10,
-                        "width": 12,
-                        "height": 4,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-10"
                         }
                       }
                     }
@@ -5594,6 +6153,84 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-44"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Store-and-forward",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 20,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-45"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 20,
+                        "y": 0,
+                        "width": 4,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-49"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 4,
+                        "width": 24,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-46"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 12,
+                        "width": 24,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-47"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 22,
+                        "width": 24,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-48"
                         }
                       }
                     }
