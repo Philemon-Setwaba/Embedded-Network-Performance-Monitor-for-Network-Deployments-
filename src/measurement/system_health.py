@@ -14,7 +14,7 @@ Why each reading matters (see Sierra-Herrera et al., Computers 2026,
   - uptime                               : a drop to ~0 means the Pi rebooted
   - CPU / load / memory / disk           : an overloaded Pi gives late or wrong measurements
   - clock synced                         : a wrong clock makes every timestamp wrong
-  - services                             : is VictoriaMetrics / Grafana / snmpd running?
+  - services                             : are VictoriaMetrics / Grafana / vmagent / netmon running?
 
 Everything is read from /proc, /sys or small system commands, so no
 extra Python package is needed.
@@ -39,7 +39,7 @@ from typing import Dict, List, Optional, Tuple
 # Services to check with `systemctl is-active`.
 # "netmon" is the scheduler service; it shows as not running until we
 # create that service later.
-DEFAULT_SERVICES = ["victoria", "grafana-server", "snmpd", "netmon", "vmagent"]
+DEFAULT_SERVICES = ["victoria", "grafana-server", "netmon", "vmagent"]
 
 # Safety limit for each small system command.
 COMMAND_TIMEOUT_S = 3.0
