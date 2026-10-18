@@ -38,7 +38,7 @@ from src.reporting import line_format
 
 # SNMPPollResult has no status field, so it is worked out here:
 STATUS_OK = 0           # counters were read
-STATUS_BAD_REPLY = 1    # agent replied, but no usable counters (e.g. wrong if_index)
+STATUS_BAD_REPLY = 1    # agent replied, but no usable counters (e.g. interface not found)
 STATUS_NO_REPLY = 2     # no reply at all (agent down, wrong community, snmpget missing)
 # In Grafana, "value mappings" turn the numbers back into words.
 
@@ -52,18 +52,18 @@ def to_lines(result: "snmp_module.SNMPPollResult") -> List[str]:
     Turn one SNMPPollResult into VictoriaMetrics lines.
 
     Example input (a 2nd good poll):
-        SNMPPollResult(target='127.0.0.1', if_index=3, reachable=True,
+        SNMPPollResult(target='192.168.1.1', if_index=8, reachable=True,
                        in_octets=529289, out_octets=319157,
                        in_bps=1234.56, out_bps=789.0,
-                       counter_bits=64, error_detail=None)
+                       counter_bits=32, error_detail=None, if_name='lte0')
     Output:
-        snmp_status{device="pi5",target="127.0.0.1",if_index="3"} 0 ...
+        snmp_status{device="pi5",target="192.168.1.1",interface="lte0"} 0 ...
         snmp_reachable{...} 1 ...
         snmp_in_octets_total{...} 529289 ...
         snmp_out_octets_total{...} 319157 ...
         snmp_in_bps{...} 1234.56 ...
         snmp_out_bps{...} 789.0 ...
-        snmp_counter_bits{...} 64 ...
+        snmp_counter_bits{...} 32 ...
     """
 
     # The time, as milliseconds. Every line from this poll gets the same time.
@@ -73,11 +73,11 @@ def to_lines(result: "snmp_module.SNMPPollResult") -> List[str]:
     # "interface" is the interface NAME (e.g. "lte0"), not its number:
     # on the Mercusys router the number changed (8 -> 18 -> 8) while the
     # router stayed up, which would split one interface into several
-    # series. Without a configured name, "index<n>" is used instead.
+    # series.
     labels = {
         "device": line_format.DEVICE,
         "target": result.target,
-        "interface": result.if_name or f"index{result.if_index}",
+        "interface": result.if_name,
     }
 
     # Work out the status number (see STATUS CODES above).

@@ -21,16 +21,16 @@ itself is still stored in VictoriaMetrics as before - nothing changed there.
 It does NOT decide WHEN to run - scheduler.py does that, using interval_s.
 
 Why SNMP runs every 10 s, in every state (also when the backhaul is down):
-  - it only reads counters on the Pi (127.0.0.1) or a local router, so it
+  - it only reads counters on the router on the local network, so it
     does not need the backhaul;
   - it shows what happens to traffic during an outage, and when it starts/ends;
   - the readings are stored on the Pi, so there is no gap in the record;
   - the "link full" and "quiet before iperf3" checks need recent readings.
-The interval must be at least the target's counter update time
-(measured about 3.07 s on the Pi).
+The interval must be longer than the time the agent takes to update its
+counters (a few seconds), or two readings can show the same value.
 
 Settings: the "snmp" section of config.json, e.g.
-    "snmp": {"target": "127.0.0.1", "if_index": 3, "community": "public",
+    "snmp": {"target": "192.168.1.1", "interface": "lte0", "community": "public",
              "interval_s": 10}
 """
 
@@ -60,13 +60,12 @@ class SnmpJob:
     name = "snmp"
 
     def __init__(self):
-        # Target, interface number and community from config.json (snmp.py reads them).
-        target, if_index, community = snmp.load_snmp_config()
+        # Target, interface name and community from config.json (snmp.py reads them).
+        target, if_name, community = snmp.load_snmp_config()
 
         # One poller for the whole run: it remembers the previous counters,
         # which it needs to work out bits per second.
-        self.poller = snmp.SNMPPoller(target=target, if_index=if_index, community=community,
-                                      if_name=snmp.load_snmp_interface_name())
+        self.poller = snmp.SNMPPoller(target=target, if_name=if_name, community=community)
 
         # How often scheduler.py should call run().
         self.interval_s = load_interval_s("snmp", DEFAULT_INTERVAL_S)
@@ -104,7 +103,7 @@ if __name__ == "__main__":
     import time
 
     job = SnmpJob()
-    print(f"SNMP job: target={job.poller.target}, if_index={job.poller.if_index}, "
+    print(f"SNMP job: target={job.poller.target}, interface={job.poller.if_name}, "
           f"every {job.interval_s:g} s, keeps last {HISTORY_READINGS} readings\n")
 
     for i in range(3):

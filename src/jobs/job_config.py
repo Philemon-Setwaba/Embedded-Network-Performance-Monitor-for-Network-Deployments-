@@ -5,7 +5,7 @@ One small helper that every job uses: read a job's interval from config.json.
 Kept in one place (like line_format.py for the *_lines.py files).
 
 config.json example:
-    "snmp":   {"target": "127.0.0.1", "if_index": 3, "community": "public", "interval_s": 10},
+    "snmp":   {"target": "192.168.1.1", "interface": "lte0", "community": "public", "interval_s": 10},
     "health": {"interval_s": 10}
 """
 

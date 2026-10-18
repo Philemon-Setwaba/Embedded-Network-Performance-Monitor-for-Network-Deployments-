@@ -17,18 +17,28 @@ Python SNMP library. This avoids an additional Python dependency and uses
 the standard `snmp` package available on Raspberry Pi OS.
 
 The target, interface and community string are read from config.json in
-the repository root, so they can be changed (e.g. from the Pi itself to a
-community network router) without editing code.
+the repository root, so they can be changed for another router without
+editing code. The agent polled is the ROUTER's (its LTE interface carries
+the traffic of every user on the backhaul), not an agent on the monitor
+itself, which would only see the monitor's own traffic.
 
-Interface by NAME (recommended) or by NUMBER:
-  "interface": "lte0"  - the interface is looked up by name (ifDescr) on
-                         EVERY poll. Needed because interface numbers are
-                         not stable on every device: on the Mercusys
-                         MB135-4G router, lte0 moved from index 8 to 18
-                         while the router stayed up, and it disappears
-                         while the LTE link is down.
-  "if_index": 3        - fixed interface number (old behaviour). Only used
-                         when "interface" is not set.
+Interface by NAME:
+  "interface": "lte0"  - the interface is looked up by name (ifDescr).
+                         Needed because interface numbers are not stable
+                         on every device: on the Mercusys MB135-4G router,
+                         lte0 moved from index 8 to 18 while the router
+                         stayed up, and it disappears while the LTE link
+                         is down.
+                         The full list of names is walked only when the
+                         number is not known yet (first poll) or no longer
+                         matches. Every normal poll asks for the NAME at
+                         the known number together with the two counters,
+                         in ONE request, so a renumbering is still noticed
+                         at once. (Walking all names on every poll sent
+                         about 18 requests per poll, and the Mercusys
+                         router left 4 of 20 walks unanswered - measured
+                         2026-10-18 - while 20 of 20 single requests
+                         were answered.)
 """
 
 import argparse
@@ -46,18 +56,17 @@ from typing import Dict, Optional, Tuple
 # config.json in the repository root (src/measurement/snmp.py -> ../../)
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "config.json"
 
-# Defaults, used when config.json has no "snmp" section.
-DEFAULT_TARGET = "127.0.0.1"
+# Defaults, used when config.json has no "snmp" section:
+# the test router (Mercusys MB135-4G) and its LTE interface.
+DEFAULT_TARGET = "192.168.1.1"
+DEFAULT_INTERFACE = "lte0"
 
 # Default SNMP community string for testing.
 # Replace this with the configured community string for the target device.
 DEFAULT_COMMUNITY = "public"
 
-# Interface to poll when none is given. Interface numbers differ per
-# device; list them with:
+# Interface names and numbers on a device can be listed with:
 #   snmpwalk -v2c -c public <target> 1.3.6.1.2.1.2.2.1.2
-# On the test Pi: 1 = lo, 2 = eth0, 3 = wlan0.
-DEFAULT_IF_INDEX = 3
 
 DEFAULT_SNMP_VERSION = "2c"
 
@@ -98,7 +107,9 @@ class SNMPPollResult:
 
     timestamp: str
     target: str
-    if_index: int
+
+    # Interface number the name was found at; None if not found yet.
+    if_index: Optional[int]
 
     # True if the agent replied, even if the reply held no usable
     # counters (e.g. wrong interface number; see error_detail).
@@ -114,18 +125,17 @@ class SNMPPollResult:
     counter_bits: Optional[int] = None
 
     # Why no counters were read, e.g. "Timeout: No Response from ..." or
-    # "No Such Instance currently exists at this OID (check if_index)".
+    # "interface 'lte0' not found on 192.168.1.1".
     # None when the poll worked.
     error_detail: Optional[str] = None
 
-    # Interface name from config.json ("interface"), e.g. "lte0" or
-    # "wlan0". None when a fixed if_index is used instead.
+    # Interface name from config.json ("interface"), e.g. "lte0".
     if_name: Optional[str] = None
 
 
-def load_snmp_config(path: Path = CONFIG_PATH) -> Tuple[str, int, str]:
+def load_snmp_config(path: Path = CONFIG_PATH) -> Tuple[str, str, str]:
     """
-    Read target, interface number and community from the "snmp" section
+    Read target, interface NAME and community from the "snmp" section
     of config.json. Missing file, section or keys fall back to defaults.
     """
 
@@ -133,19 +143,9 @@ def load_snmp_config(path: Path = CONFIG_PATH) -> Tuple[str, int, str]:
 
     return (
         snmp_config.get("target", DEFAULT_TARGET),
-        int(snmp_config.get("if_index", DEFAULT_IF_INDEX)),
+        str(snmp_config.get("interface", DEFAULT_INTERFACE)),
         snmp_config.get("community", DEFAULT_COMMUNITY),
     )
-
-
-def load_snmp_interface_name(path: Path = CONFIG_PATH) -> Optional[str]:
-    """
-    Read the interface NAME ("interface") from the "snmp" section of
-    config.json, e.g. "lte0". None if not set (then if_index is used).
-    """
-
-    name = _read_snmp_section(path).get("interface")
-    return str(name) if name else None
 
 
 def _read_snmp_section(path: Path) -> dict:
@@ -162,9 +162,9 @@ class SNMPPoller:
     """
     Polls the in/out octet counters for one interface on one SNMP agent.
 
-    If if_name is given, the interface number is looked up by name on
-    every poll (see module docstring). Otherwise the fixed if_index is
-    used.
+    The interface number is looked up by name when it is not known yet or
+    no longer matches, and every poll checks the name at the known number
+    (see module docstring).
 
     64-bit counters (ifHCInOctets/ifHCOutOctets) are tried first. If the
     agent replies but does not provide them, the 32-bit counters
@@ -180,16 +180,17 @@ class SNMPPoller:
     def __init__(
         self,
         target: str,
-        if_index: int = DEFAULT_IF_INDEX,
+        if_name: str = DEFAULT_INTERFACE,
         community: str = DEFAULT_COMMUNITY,
         timeout_s: float = DEFAULT_TIMEOUT_S,
-        if_name: Optional[str] = None,
     ):
         self.target = target
-        self.if_index = if_index
+        self.if_name = if_name
         self.community = community
         self.timeout_s = timeout_s
-        self.if_name = if_name
+
+        # The interface number; found by name on the first poll.
+        self.if_index: Optional[int] = None
 
         # Store the previous successful counter values so that the
         # traffic rate can be calculated during the next successful poll.
@@ -201,32 +202,38 @@ class SNMPPoller:
         # 64 or 32 once known; None until counters have been read once.
         self._counter_bits: Optional[int] = None
 
+        # True once self.if_index is known to belong to self.if_name.
+        # False -> the next poll walks the names to find the number.
+        self._index_confirmed = False
+
     def poll_once(self) -> SNMPPollResult:
         """Perform one SNMP poll and return the measurement result."""
 
         timestamp = self._now_utc_iso()
         poll_monotonic = time.monotonic()
 
-        # 0. Interface by name: find its current number first.
-        if self.if_name:
-            found_index, replied, error_detail = self._find_if_index()
+        # 0. Interface by name: find its number if it is not known yet.
+        if not self._index_confirmed:
+            failed = self._look_up_index(timestamp)
+            if failed is not None:
+                return failed
 
-            if found_index is None:
-                # Agent did not answer, or the interface does not exist
-                # right now (e.g. lte0 while the LTE link is down).
-                # Forget the old counters: when the interface comes back
-                # its counters may have restarted.
-                self._forget_counters()
-                return self._failed_result(timestamp, replied, error_detail)
+        # 1. One request: the name at the known number + the two counters.
+        counters, bits, replied, error_detail, name = self._read_counters()
 
-            if found_index != self.if_index:
-                # The interface got a new number: its counters belong to
-                # a different interface instance, so do not compare them
-                # with the old ones.
-                self.if_index = found_index
-                self._forget_counters()
-
-        counters, bits, replied, error_detail = self._read_counters()
+        # 2. The number now belongs to another interface (or to none):
+        #    look the name up again and read once more, in this same poll.
+        if replied and name != self.if_name:
+            self._index_confirmed = False
+            failed = self._look_up_index(timestamp)
+            if failed is not None:
+                return failed
+            counters, bits, replied, error_detail, name = self._read_counters()
+            if replied and name != self.if_name:
+                self._index_confirmed = False
+                counters = None
+                error_detail = (f"interface number {self.if_index} is "
+                                f"'{name}', not '{self.if_name}'")
 
         # SNMP request failed or the reply held no usable counters.
         if counters is None:
@@ -283,6 +290,35 @@ class SNMPPoller:
 
         self._last_octets = None
         self._last_poll_monotonic = None
+
+    def _look_up_index(self, timestamp: str) -> Optional[SNMPPollResult]:
+        """
+        Walk the interface names to find the number of self.if_name.
+
+        Returns None if it was found (self.if_index is then set), or a
+        failed result to return from poll_once.
+        """
+
+        found_index, replied, error_detail = self._find_if_index()
+
+        if found_index is None:
+            # Agent did not answer, or the interface does not exist
+            # right now (e.g. lte0 while the LTE link is down).
+            # Forget the old counters: when the interface comes back
+            # its counters may have restarted.
+            self._index_confirmed = False
+            self._forget_counters()
+            return self._failed_result(timestamp, replied, error_detail)
+
+        if found_index != self.if_index:
+            # The interface got a new number: its counters belong to
+            # a different interface instance, so do not compare them
+            # with the old ones.
+            self.if_index = found_index
+            self._forget_counters()
+
+        self._index_confirmed = True
+        return None
 
     def _find_if_index(self) -> Tuple[Optional[int], bool, Optional[str]]:
         """
@@ -369,15 +405,17 @@ class SNMPPoller:
 
     def _read_counters(
         self,
-    ) -> Tuple[Optional[Tuple[int, int]], Optional[int], bool, Optional[str]]:
+    ) -> Tuple[Optional[Tuple[int, int]], Optional[int], bool, Optional[str], Optional[str]]:
         """
         Read the in/out counters, choosing 64-bit or 32-bit on first use.
+        The name at self.if_index is read in the same request.
 
-        Returns (counters, bits, replied, error_detail):
+        Returns (counters, bits, replied, error_detail, name):
           counters     (in_octets, out_octets), or None on failure
           bits         64 or 32, or None on failure
           replied      True if the agent sent any reply
           error_detail why no counters were read, or None
+          name         interface name at self.if_index (None if no reply)
         """
 
         # Already know which counters this agent provides.
@@ -385,39 +423,52 @@ class SNMPPoller:
             return self._try_counters(self._counter_bits)
 
         # First use: try 64-bit counters.
-        counters, bits, replied, error_detail = self._try_counters(64)
+        counters, bits, replied, error_detail, name = self._try_counters(64)
 
         # Worked, or no reply at all (no point trying 32-bit as well).
         if counters is not None or not replied:
             if counters is not None:
                 self._counter_bits = 64
-            return counters, bits, replied, error_detail
+            return counters, bits, replied, error_detail, name
 
         # The agent replied, but without 64-bit counters (it answers
         # "No Such Object"), so fall back to the 32-bit counters.
-        counters, bits, replied, error_detail = self._try_counters(32)
+        counters, bits, replied, error_detail, name = self._try_counters(32)
         if counters is not None:
             self._counter_bits = 32
 
-        return counters, bits, replied, error_detail
+        return counters, bits, replied, error_detail, name
 
     def _try_counters(
         self,
         bits: int,
-    ) -> Tuple[Optional[Tuple[int, int]], Optional[int], bool, Optional[str]]:
+    ) -> Tuple[Optional[Tuple[int, int]], Optional[int], bool, Optional[str], Optional[str]]:
         """Request one counter size and parse it (see _read_counters)."""
 
         stdout, error_detail = self._run_snmpget_subprocess(bits)
 
         if stdout is None:
-            return None, None, False, error_detail
+            return None, None, False, error_detail, None
 
-        counters = self._parse_counters(stdout)
+        name, counter_text = self._split_name(stdout)
+        counters = self._parse_counters(counter_text)
 
         if counters is None:
-            return None, None, True, self._describe_bad_reply(stdout)
+            return None, None, True, self._describe_bad_reply(counter_text), name
 
-        return counters, bits, True, None
+        return counters, bits, True, None, name
+
+    def _split_name(self, stdout: str) -> Tuple[Optional[str], str]:
+        """
+        The first value line is the name (ifDescr) at self.if_index.
+        Return (name, the remaining lines).
+        """
+
+        lines = [line.strip() for line in stdout.splitlines() if line.strip()]
+        if not lines:
+            return None, ""
+
+        return lines[0].strip('"'), "\n".join(lines[1:])
 
     def run_continuous(
         self,
@@ -464,7 +515,8 @@ class SNMPPoller:
         Run one snmpget request for both interface counters.
 
         bits: 64 for ifHCInOctets/ifHCOutOctets, 32 for ifIn/OutOctets.
-        Both OIDs are requested in one SNMP request.
+        Both OIDs are requested in one SNMP request, after the interface's
+        name (ifDescr), so a renumbering is noticed (see top).
 
         Returns (stdout, None) if the agent replied, or
         (None, error message) if there was no reply or snmpget failed.
@@ -473,6 +525,8 @@ class SNMPPoller:
         in_base, out_base = COUNTER_OIDS[bits]
         in_oid = f"{in_base}.{self.if_index}"
         out_oid = f"{out_base}.{self.if_index}"
+
+        name_oid = f"{IF_DESCR_OID_BASE}.{self.if_index}"
 
         try:
             proc = subprocess.run(
@@ -484,6 +538,7 @@ class SNMPPoller:
                     "-t", str(self.timeout_s),  # wait this long for an SNMP response
                     "-r", "0",
                     self.target,
+                    name_oid,
                     in_oid,
                     out_oid,
                 ],
@@ -499,7 +554,7 @@ class SNMPPoller:
             return None, str(exc)
 
         if proc.returncode != 0:
-            # e.g. "Timeout: No Response from 127.0.0.1." (no agent,
+            # e.g. "Timeout: No Response from 192.168.1.1." (no agent,
             # wrong community string, or agent not reachable)
             message = (proc.stderr or proc.stdout).strip()
             return None, message or f"snmpget exited with code {proc.returncode}"
@@ -517,7 +572,7 @@ class SNMPPoller:
 
         # The agent answers this when the interface number does not exist.
         if "No Such Instance" in first_line:
-            return f"{first_line} (check if_index)"
+            return f"{first_line} (interface number not found)"
 
         return first_line
 
@@ -593,20 +648,11 @@ class SNMPPoller:
 
 if __name__ == "__main__":
     # Manual test: perform five measurements at five-second intervals.
-    # The deployment interval is 30 seconds by default.
+    # (The monitor itself uses the interval in config.json: 10 s.)
     # Target, interface and community come from config.json.
-    target, config_if_index, community = load_snmp_config()
-    config_if_name = load_snmp_interface_name()
+    target, config_if_name, community = load_snmp_config()
 
     parser = argparse.ArgumentParser(description="Poll SNMP interface counters.")
-    parser.add_argument(
-        "if_index",
-        nargs="?",
-        type=int,
-        default=config_if_index,
-        help=f"interface number to poll (default from config.json: {config_if_index}); "
-             "ignored when an interface name is set",
-    )
     parser.add_argument(
         "--interface",
         default=config_if_name,
@@ -629,9 +675,8 @@ if __name__ == "__main__":
 
     poller = SNMPPoller(
         target=target,
-        if_index=args.if_index,
-        community=community,
         if_name=args.interface,
+        community=community,
     )
 
     poller.run_continuous(
