@@ -38,16 +38,21 @@ StateDirectory=vmagent
 #     The remote VictoriaMetrics. Port must stay the same as config.json.
 # -remoteWrite.tmpDataPath=/var/lib/vmagent
 #     The disk buffer (survives reboots).
-# -remoteWrite.maxDiskUsagePerURL=1GB
-#     TEMPORARY value: the most disk the buffer may use. When full, vmagent
-#     drops the OLDEST buffered data. Docs: minimum 500 MiB per URL, use a
-#     multiple of 500 MB. Will be set from the measured bytes per day.
-# (-remoteWrite.rateLimit will be added after measuring.)
+# -remoteWrite.maxDiskUsagePerURL=9GB
+#     The most disk the buffer may use. When full, vmagent drops the OLDEST
+#     buffered data. 9 GB = 12 months at the measured ~22.5 MB/day (8.2 GB)
+#     plus about 10 % margin. Docs: minimum 500 MiB per URL, use a multiple
+#     of 500 MB (9 GB = 18 x 500 MB).
+# -remoteWrite.rateLimit=62500
+#     The most data vmagent sends per second, in bytes: 62500 B/s =
+#     0.5 Mbit/s = 10 % of the 5 Mbit/s iNethi upload. Stops the sending of
+#     a backlog after an outage from filling the link.
 ExecStart=/usr/local/bin/vmagent \
   -httpListenAddr=127.0.0.1:8429 \
   -remoteWrite.url=http://__HOST__:__PORT__/api/v1/write \
   -remoteWrite.tmpDataPath=/var/lib/vmagent \
-  -remoteWrite.maxDiskUsagePerURL=1GB
+  -remoteWrite.maxDiskUsagePerURL=9GB \
+  -remoteWrite.rateLimit=62500
 
 # If it stops for any reason, start it again after 10 s.
 Restart=always
