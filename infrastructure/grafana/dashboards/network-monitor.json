@@ -656,7 +656,7 @@
         "spec": {
           "id": 15,
           "title": "Backhaul state over time",
-          "description": "History of the internet link (backhaul): green = up, red = down, orange = the pi’s own wi-fi was off, grey = not checked yet.",
+          "description": "History of the internet link (backhaul): green = up, red = down, orange = the pi\u2019s own wi-fi was off, grey = not checked yet.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1017,7 +1017,7 @@
         "spec": {
           "id": 18,
           "title": "Link full (1 minute)",
-          "description": "Red = the router's LTE link was full for at least 1 whole minute (≥ 70 % of the iNethi reference: 7 Mbit/s down, 3.5 Mbit/s up). Short bursts are not shown. The monitor's own iperf3 tests go to the laptop on the same Mercusys LAN, so they do not use the LTE link and do not cause these blocks.",
+          "description": "Red = the router's LTE link was full for at least 1 whole minute (at least 70 % of the iNethi reference: 7 Mbit/s down, 3.5 Mbit/s up). Short bursts are not shown.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1380,7 +1380,7 @@
         "spec": {
           "id": 20,
           "title": "TCP speed (iperf3)",
-          "description": "Highest speed during the monitor's iperf3 test to the laptop on the same Mercusys LAN (10 s each way), up to 4 times a day. The test goes Pi → router → laptop over Wi-Fi, so it measures the local network, not the LTE backhaul.",
+          "description": "Highest speed in each TCP test of the monitor's iperf3 sets (10 s each way), up to 4 sets a day plus retries. The test server is the laptop, reached over Tailscale through the LTE backhaul.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2327,7 +2327,7 @@
         "spec": {
           "id": 26,
           "title": "Traceroute result",
-          "description": "Shows if the path to 8.8.8.8 worked and where it broke. runs when the backhaul goes down, every 30 min while down, when it comes back, and once an hour as a normal baseline. “pi cannot reach gateway” = the problem is the pi’s own first hop.",
+          "description": "Shows if the path to 8.8.8.8 worked and where it broke. runs when the backhaul goes down, every 30 min while down, when it comes back, and once an hour as a normal baseline. \u201cpi cannot reach gateway\u201d = the problem is the pi\u2019s own first hop.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -2947,7 +2947,7 @@
         "spec": {
           "id": 31,
           "title": "Which access point (BSSID)",
-          "description": "Which access point (BSSID) the Pi was connected to. On the Mercusys router this should be one row (08:8a:f1:cc:ec:d5). A new row means the Pi joined a different access point; a drop at the same time can explain a local link down.",
+          "description": "Which access point (BSSID) the Pi was connected to. On the Mercusys router this is normally one row (08:8a:f1:cc:ec:d4). A new row means the Pi joined a different access point; a drop at the same time can explain a local link down.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -3564,7 +3564,7 @@
         "spec": {
           "id": 36,
           "title": "Temperature",
-          "description": "CPU temperature, every 10 s. Dashed lines: 80 °C = default thermal limit (yellow), 85 °C = hard throttling on all Raspberry Pi models (red), from Raspberry Pi Ltd's thermal white paper (2026).",
+          "description": "CPU temperature, every 10 s. Dashed lines: 80 \u00b0C = default thermal limit (yellow), 85 \u00b0C = hard throttling on all Raspberry Pi models (red), from Raspberry Pi Ltd's thermal white paper (2026).",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -5635,7 +5635,7 @@
         "spec": {
           "id": 7,
           "title": "Status timeline",
-          "description": "Result of each ping check (5 pings to 8.8.8.8 every 10 s). no reply = nothing came back. ping error = ping itself reported a problem, e.g. “network is unreachable” when the pi’s wi-fi is off.",
+          "description": "Result of each ping check (5 pings to 8.8.8.8 every 10 s). no reply = nothing came back. ping error = ping itself reported a problem, e.g. \u201cnetwork is unreachable\u201d when the pi\u2019s wi-fi is off.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
