@@ -20,7 +20,7 @@
 
 set -u
 SERVER=${SERVER:-iperf.he.net}
-PORT=5201                              # fixed — not read from config.json
+PORT=${PORT:-5201}
 PHASE_MIN=${PHASE_MIN:-2}             # minutes for phases 0, 1, 3 (phase 2 is always 1 min)
 LOGDIR=$HOME/tests
 mkdir -p "$LOGDIR"
