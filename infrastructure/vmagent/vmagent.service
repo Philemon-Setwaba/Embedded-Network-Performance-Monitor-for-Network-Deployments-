@@ -40,8 +40,8 @@ StateDirectory=vmagent
 #     The disk buffer (survives reboots).
 # -remoteWrite.maxDiskUsagePerURL=9GB
 #     The most disk the buffer may use. When full, vmagent drops the OLDEST
-#     buffered data. 9 GB = 12 months at the measured ~22.5 MB/day (8.2 GB)
-#     plus about 10 % margin. Docs: minimum 500 MiB per URL, use a multiple
+#     buffered data. 9 GB = 12 months at the measured 0.967 MB/h (8.5 GB)
+#     plus about 6 % margin. Docs: minimum 500 MiB per URL, use a multiple
 #     of 500 MB (9 GB = 18 x 500 MB).
 # -remoteWrite.rateLimit=62500
 #     The most data vmagent sends per second, in bytes: 62500 B/s =
