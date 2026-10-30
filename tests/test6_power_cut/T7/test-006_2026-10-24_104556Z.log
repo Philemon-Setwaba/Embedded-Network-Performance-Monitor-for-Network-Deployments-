@@ -1,0 +1,6 @@
+# test-006_2026-10-24_104556Z: iperf3 server started 2026-10-24T10:45:56+00:00 (UTC), port 5201
+Sat Oct 24 12:45:56 2026 -----------------------------------------------------------
+Sat Oct 24 12:45:56 2026 Server listening on 5201 (test #1)
+Sat Oct 24 12:45:56 2026 -----------------------------------------------------------
+Sat Oct 24 12:58:33 2026 iperf3: interrupt - the server has terminated
+# iperf3 server stopped 2026-10-24T10:58:34+00:00 (UTC)

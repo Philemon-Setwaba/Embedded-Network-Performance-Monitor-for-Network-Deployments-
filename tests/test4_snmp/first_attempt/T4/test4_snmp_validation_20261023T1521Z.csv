@@ -1,0 +1,31 @@
+phase,time_utc,iperf_tx_mbps,iperf_rx_mbps,note
+start,2026-10-23T15:21:31Z,,,systemctl start vmagent
+start,2026-10-23T15:21:33Z,,,systemctl start netmon — test begins  server=iperf.he.net:5201
+run1_start,2026-10-23T15:21:33Z,,,run 1 begins
+run1_ph0_start,2026-10-23T15:21:33Z,,,quiet baseline — noise floor
+run1_ph0_end,2026-10-23T15:23:33Z,,,
+run1_ph1_start,2026-10-23T15:23:33Z,,,TCP upload to iperf.he.net — expect out_bps spike
+run1_ph1,2026-10-23T15:23:34Z,-,,iperf3 upload - Mbit/s
+run1_ph1_end,2026-10-23T15:23:34Z,,,
+run1_ph2_start,2026-10-23T15:23:34Z,,,settle — link returns to idle
+run1_ph2_end,2026-10-23T15:24:34Z,,,
+run1_ph3_start,2026-10-23T15:24:34Z,,,TCP download from iperf.he.net — expect in_bps spike
+run1_ph3,2026-10-23T15:26:37Z,,24.07,iperf3 download 24.07 Mbit/s
+run1_ph3_end,2026-10-23T15:26:37Z,,,
+run1_ph4_start,2026-10-23T15:26:37Z,,,post-test baseline
+run1_ph4_end,2026-10-23T15:28:37Z,,,run 1 complete
+run2_start,2026-10-23T15:28:37Z,,,run 2 begins
+run2_ph0_start,2026-10-23T15:28:37Z,,,quiet baseline — noise floor
+run2_ph0_end,2026-10-23T15:30:37Z,,,
+run2_ph1_start,2026-10-23T15:30:37Z,,,TCP upload to iperf.he.net — expect out_bps spike
+run2_ph1,2026-10-23T15:30:38Z,-,,iperf3 upload - Mbit/s
+run2_ph1_end,2026-10-23T15:30:38Z,,,
+run2_ph2_start,2026-10-23T15:30:38Z,,,settle — link returns to idle
+run2_ph2_end,2026-10-23T15:31:38Z,,,
+run2_ph3_start,2026-10-23T15:31:38Z,,,TCP download from iperf.he.net — expect in_bps spike
+run2_ph3,2026-10-23T15:31:39Z,,-,iperf3 download - Mbit/s
+run2_ph3_end,2026-10-23T15:31:39Z,,,
+run2_ph4_start,2026-10-23T15:31:39Z,,,post-test baseline
+run2_ph4_end,2026-10-23T15:34:39Z,,,run 2 complete
+cleanup,2026-10-23T15:34:39Z,,,systemctl stop netmon
+cleanup,2026-10-23T15:34:39Z,,,systemctl stop vmagent

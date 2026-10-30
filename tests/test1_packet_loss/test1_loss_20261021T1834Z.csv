@@ -1,0 +1,15 @@
+step,loss_pct,start_utc,end_utc,command
+start,,2026-10-21T18:34:53Z,,systemctl start vmagent
+start,,2026-10-21T18:34:53Z,,systemctl start netmon
+0,0,2026-10-21T18:34:53Z,2026-10-21T18:44:53Z,tc qdisc del dev wlan0 root
+1,10,2026-10-21T18:44:53Z,2026-10-21T18:54:53Z,tc qdisc replace dev wlan0 root netem loss 10%
+2,30,2026-10-21T18:54:53Z,2026-10-21T19:04:53Z,tc qdisc replace dev wlan0 root netem loss 30%
+3,50,2026-10-21T19:04:53Z,2026-10-21T19:14:53Z,tc qdisc replace dev wlan0 root netem loss 50%
+4,70,2026-10-21T19:14:53Z,2026-10-21T19:24:53Z,tc qdisc replace dev wlan0 root netem loss 70%
+5,90,2026-10-21T19:24:53Z,2026-10-21T19:34:53Z,tc qdisc replace dev wlan0 root netem loss 90%
+6,100,2026-10-21T19:34:53Z,2026-10-21T19:44:53Z,tc qdisc replace dev wlan0 root netem loss 100%
+7,0,2026-10-21T19:44:53Z,2026-10-21T19:54:53Z,tc qdisc del dev wlan0 root
+cleanup,,2026-10-21T19:54:53Z,,netem removed
+cleanup,,2026-10-21T19:54:53Z,,systemctl stop netmon
+drain,,2026-10-21T19:54:53Z,,pending_bytes=0 dropped=0 waited_s=0
+cleanup,,2026-10-21T19:54:53Z,,systemctl stop vmagent

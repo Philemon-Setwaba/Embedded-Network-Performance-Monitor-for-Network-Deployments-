@@ -1,0 +1,239 @@
+# test-006_2026-10-24_221310Z: iperf3 server started 2026-10-24T22:13:10+00:00 (UTC), port 5201
+Sun Oct 25 00:13:10 2026 -----------------------------------------------------------
+Sun Oct 25 00:13:10 2026 Server listening on 5201 (test #1)
+Sun Oct 25 00:13:10 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:14 2026 Accepted connection from 100.116.95.119, port 49132
+Sun Oct 25 01:00:14 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 49136
+Sun Oct 25 01:00:15 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 01:00:15 2026 [  6]   0.00-1.00   sec   128 KBytes  1.05 Mbits/sec                  
+Sun Oct 25 01:00:16 2026 [  6]   1.00-2.00   sec   640 KBytes  5.24 Mbits/sec                  
+Sun Oct 25 01:00:17 2026 [  6]   2.00-3.00   sec  1.00 MBytes  8.39 Mbits/sec                  
+Sun Oct 25 01:00:18 2026 [  6]   3.00-4.00   sec  1.38 MBytes  11.5 Mbits/sec                  
+Sun Oct 25 01:00:19 2026 [  6]   4.00-5.00   sec  1.38 MBytes  11.5 Mbits/sec                  
+Sun Oct 25 01:00:20 2026 [  6]   5.00-6.00   sec  1.38 MBytes  11.5 Mbits/sec                  
+Sun Oct 25 01:00:21 2026 [  6]   6.00-7.00   sec  1.88 MBytes  15.7 Mbits/sec                  
+Sun Oct 25 01:00:22 2026 [  6]   7.00-8.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 01:00:23 2026 [  6]   8.00-9.00   sec  2.12 MBytes  17.9 Mbits/sec                  
+Sun Oct 25 01:00:24 2026 [  6]   9.00-10.00  sec  1.75 MBytes  14.7 Mbits/sec                  
+Sun Oct 25 01:00:24 2026 [  6]  10.00-10.09  sec   128 KBytes  11.4 Mbits/sec                  
+Sun Oct 25 01:00:24 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 01:00:24 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 01:00:24 2026 [  6]   0.00-10.09  sec  13.9 MBytes  11.5 Mbits/sec                  receiver
+Sun Oct 25 01:00:24 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:24 2026 Server listening on 5201 (test #2)
+Sun Oct 25 01:00:24 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:26 2026 Accepted connection from 100.116.95.119, port 59610
+Sun Oct 25 01:00:26 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 59620
+Sun Oct 25 01:00:27 2026 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+Sun Oct 25 01:00:27 2026 [  6]   0.00-1.00   sec   256 KBytes  2.09 Mbits/sec    0   40.8 KBytes       
+Sun Oct 25 01:00:28 2026 [  6]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec    0   82.7 KBytes       
+Sun Oct 25 01:00:29 2026 [  6]   2.00-3.01   sec  1.75 MBytes  14.6 Mbits/sec    0    163 KBytes       
+Sun Oct 25 01:00:30 2026 [  6]   3.01-4.00   sec  2.38 MBytes  20.0 Mbits/sec    6    169 KBytes       
+Sun Oct 25 01:00:31 2026 [  6]   4.00-5.00   sec  1.50 MBytes  12.6 Mbits/sec   18    133 KBytes       
+Sun Oct 25 01:00:32 2026 [  6]   5.00-6.00   sec  1.62 MBytes  13.6 Mbits/sec    2    106 KBytes       
+Sun Oct 25 01:00:33 2026 [  6]   6.00-7.00   sec  1.38 MBytes  11.5 Mbits/sec    0    114 KBytes       
+Sun Oct 25 01:00:34 2026 [  6]   7.00-8.00   sec  1.50 MBytes  12.6 Mbits/sec   10   89.9 KBytes       
+Sun Oct 25 01:00:35 2026 [  6]   8.00-9.00   sec  1.00 MBytes  8.39 Mbits/sec   19    101 KBytes       
+Sun Oct 25 01:00:36 2026 [  6]   9.00-10.00  sec  1.25 MBytes  10.5 Mbits/sec    5   77.9 KBytes       
+Sun Oct 25 01:00:36 2026 [  6]  10.00-10.10  sec  0.00 Bytes  0.00 bits/sec    0   79.1 KBytes       
+Sun Oct 25 01:00:36 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 01:00:36 2026 [ ID] Interval           Transfer     Bitrate         Retr
+Sun Oct 25 01:00:36 2026 [  6]   0.00-10.10  sec  13.5 MBytes  11.2 Mbits/sec   60             sender
+Sun Oct 25 01:00:37 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:37 2026 Server listening on 5201 (test #3)
+Sun Oct 25 01:00:37 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:39 2026 Accepted connection from 100.116.95.119, port 40148
+Sun Oct 25 01:00:39 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 39792
+Sun Oct 25 01:00:40 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 01:00:40 2026 [  6]   0.00-1.00   sec  57.6 KBytes   471 Kbits/sec  3.595 ms  0/48 (0%)  
+Sun Oct 25 01:00:41 2026 [  6]   1.00-2.00   sec  56.4 KBytes   462 Kbits/sec  21.894 ms  0/47 (0%)  
+Sun Oct 25 01:00:42 2026 [  6]   2.00-3.00   sec  62.4 KBytes   511 Kbits/sec  26.641 ms  0/52 (0%)  
+Sun Oct 25 01:00:43 2026 [  6]   3.00-4.00   sec  62.4 KBytes   511 Kbits/sec  25.161 ms  0/52 (0%)  
+Sun Oct 25 01:00:44 2026 [  6]   4.00-5.00   sec  62.4 KBytes   511 Kbits/sec  20.811 ms  0/52 (0%)  
+Sun Oct 25 01:00:45 2026 [  6]   5.00-6.00   sec  62.4 KBytes   511 Kbits/sec  26.065 ms  0/52 (0%)  
+Sun Oct 25 01:00:46 2026 [  6]   6.00-7.00   sec  61.2 KBytes   501 Kbits/sec  24.133 ms  0/51 (0%)  
+Sun Oct 25 01:00:47 2026 [  6]   7.00-8.00   sec  57.6 KBytes   472 Kbits/sec  26.101 ms  0/48 (0%)  
+Sun Oct 25 01:00:48 2026 [  6]   8.00-9.00   sec  66.0 KBytes   540 Kbits/sec  23.376 ms  0/55 (0%)  
+Sun Oct 25 01:00:49 2026 [  6]   9.00-10.00  sec  61.2 KBytes   501 Kbits/sec  5.942 ms  0/51 (0%)  
+Sun Oct 25 01:00:49 2026 [  6]  10.00-10.03  sec  1.20 KBytes   332 Kbits/sec  6.264 ms  0/1 (0%)  
+Sun Oct 25 01:00:49 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 01:00:49 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 01:00:49 2026 [  6]   0.00-10.03  sec   610 KBytes   499 Kbits/sec  6.264 ms  0/509 (0%)  receiver
+Sun Oct 25 01:00:49 2026 -----------------------------------------------------------
+Sun Oct 25 01:00:49 2026 Server listening on 5201 (test #4)
+Sun Oct 25 01:00:49 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:09 2026 Accepted connection from 100.116.95.119, port 38900
+Sun Oct 25 06:00:09 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 38912
+Sun Oct 25 06:00:10 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 06:00:10 2026 [  6]   0.00-1.00   sec   128 KBytes  1.05 Mbits/sec                  
+Sun Oct 25 06:00:11 2026 [  6]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec                  
+Sun Oct 25 06:00:12 2026 [  6]   2.00-3.00   sec  1.25 MBytes  10.5 Mbits/sec                  
+Sun Oct 25 06:00:13 2026 [  6]   3.00-4.00   sec  1.50 MBytes  12.6 Mbits/sec                  
+Sun Oct 25 06:00:14 2026 [  6]   4.00-5.00   sec  2.00 MBytes  16.8 Mbits/sec                  
+Sun Oct 25 06:00:15 2026 [  6]   5.00-6.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 06:00:16 2026 [  6]   6.00-7.00   sec  2.25 MBytes  18.9 Mbits/sec                  
+Sun Oct 25 06:00:17 2026 [  6]   7.00-8.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 06:00:18 2026 [  6]   8.00-9.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 06:00:19 2026 [  6]   9.00-10.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+Sun Oct 25 06:00:20 2026 [  6]  10.00-10.45  sec  1.00 MBytes  18.7 Mbits/sec                  
+Sun Oct 25 06:00:20 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 06:00:20 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 06:00:20 2026 [  6]   0.00-10.45  sec  17.8 MBytes  14.2 Mbits/sec                  receiver
+Sun Oct 25 06:00:20 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:20 2026 Server listening on 5201 (test #5)
+Sun Oct 25 06:00:20 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:23 2026 Accepted connection from 100.116.95.119, port 42418
+Sun Oct 25 06:00:23 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 42420
+Sun Oct 25 06:00:24 2026 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+Sun Oct 25 06:00:24 2026 [  6]   0.00-1.00   sec   384 KBytes  3.14 Mbits/sec    0   44.4 KBytes       
+Sun Oct 25 06:00:25 2026 [  6]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec    0   89.9 KBytes       
+Sun Oct 25 06:00:26 2026 [  6]   2.00-3.00   sec  2.00 MBytes  16.8 Mbits/sec    0    171 KBytes       
+Sun Oct 25 06:00:27 2026 [  6]   3.00-4.00   sec  1.75 MBytes  14.7 Mbits/sec   25    104 KBytes       
+Sun Oct 25 06:00:28 2026 [  6]   4.00-5.00   sec  1.25 MBytes  10.5 Mbits/sec    0    119 KBytes       
+Sun Oct 25 06:00:29 2026 [  6]   5.00-6.00   sec  1.62 MBytes  13.6 Mbits/sec   13   86.3 KBytes       
+Sun Oct 25 06:00:30 2026 [  6]   6.00-7.00   sec  1.00 MBytes  8.39 Mbits/sec    0   99.5 KBytes       
+Sun Oct 25 06:00:31 2026 [  6]   7.00-8.00   sec  1.50 MBytes  12.6 Mbits/sec    0    104 KBytes       
+Sun Oct 25 06:00:32 2026 [  6]   8.00-9.00   sec  1.00 MBytes  8.39 Mbits/sec   17   76.8 KBytes       
+Sun Oct 25 06:00:33 2026 [  6]   9.00-10.00  sec  1.38 MBytes  11.5 Mbits/sec    0   95.9 KBytes       
+Sun Oct 25 06:00:33 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 06:00:33 2026 [ ID] Interval           Transfer     Bitrate         Retr
+Sun Oct 25 06:00:33 2026 [  6]   0.00-10.08  sec  12.8 MBytes  10.6 Mbits/sec   55             sender
+Sun Oct 25 06:00:33 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:33 2026 Server listening on 5201 (test #6)
+Sun Oct 25 06:00:33 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:35 2026 Accepted connection from 100.116.95.119, port 38628
+Sun Oct 25 06:00:35 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 49179
+Sun Oct 25 06:00:36 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 06:00:36 2026 [  6]   0.00-1.00   sec  56.4 KBytes   462 Kbits/sec  2.698 ms  0/47 (0%)  
+Sun Oct 25 06:00:37 2026 [  6]   1.00-2.00   sec  62.4 KBytes   511 Kbits/sec  3.281 ms  0/52 (0%)  
+Sun Oct 25 06:00:38 2026 [  6]   2.00-3.00   sec  61.2 KBytes   501 Kbits/sec  4.370 ms  0/51 (0%)  
+Sun Oct 25 06:00:39 2026 [  6]   3.00-4.00   sec  60.0 KBytes   491 Kbits/sec  4.816 ms  0/50 (0%)  
+Sun Oct 25 06:00:40 2026 [  6]   4.00-5.00   sec  61.2 KBytes   501 Kbits/sec  4.271 ms  0/51 (0%)  
+Sun Oct 25 06:00:41 2026 [  6]   5.00-6.00   sec  61.2 KBytes   501 Kbits/sec  3.258 ms  0/51 (0%)  
+Sun Oct 25 06:00:42 2026 [  6]   6.00-7.00   sec  61.2 KBytes   501 Kbits/sec  3.969 ms  0/51 (0%)  
+Sun Oct 25 06:00:43 2026 [  6]   7.00-8.00   sec  61.2 KBytes   501 Kbits/sec  4.519 ms  0/51 (0%)  
+Sun Oct 25 06:00:44 2026 [  6]   8.00-9.00   sec  61.2 KBytes   501 Kbits/sec  3.259 ms  0/51 (0%)  
+Sun Oct 25 06:00:45 2026 [  6]   9.00-10.00  sec  61.2 KBytes   501 Kbits/sec  3.880 ms  0/51 (0%)  
+Sun Oct 25 06:00:45 2026 [  6]  10.00-10.07  sec  3.60 KBytes   403 Kbits/sec  4.835 ms  0/3 (0%)  
+Sun Oct 25 06:00:45 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 06:00:45 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 06:00:45 2026 [  6]   0.00-10.07  sec   610 KBytes   496 Kbits/sec  4.835 ms  0/509 (0%)  receiver
+Sun Oct 25 06:00:46 2026 -----------------------------------------------------------
+Sun Oct 25 06:00:46 2026 Server listening on 5201 (test #7)
+Sun Oct 25 06:00:46 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:06 2026 Accepted connection from 100.116.95.119, port 56798
+Sun Oct 25 12:00:06 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 56806
+Sun Oct 25 12:00:07 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 12:00:07 2026 [  6]   0.00-1.00   sec   256 KBytes  2.09 Mbits/sec                  
+Sun Oct 25 12:00:08 2026 [  6]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec                  
+Sun Oct 25 12:00:09 2026 [  6]   2.00-3.00   sec  1.38 MBytes  11.5 Mbits/sec                  
+Sun Oct 25 12:00:10 2026 [  6]   3.00-4.00   sec  1.62 MBytes  13.6 Mbits/sec                  
+Sun Oct 25 12:00:11 2026 [  6]   4.00-5.00   sec  1.75 MBytes  14.7 Mbits/sec                  
+Sun Oct 25 12:00:12 2026 [  6]   5.00-6.00   sec  1.50 MBytes  12.6 Mbits/sec                  
+Sun Oct 25 12:00:13 2026 [  6]   6.00-7.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 12:00:14 2026 [  6]   7.00-8.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 12:00:15 2026 [  6]   8.00-9.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 12:00:16 2026 [  6]   9.00-10.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+Sun Oct 25 12:00:16 2026 [  6]  10.00-10.20  sec   384 KBytes  15.8 Mbits/sec                  
+Sun Oct 25 12:00:16 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 12:00:16 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 12:00:16 2026 [  6]   0.00-10.20  sec  16.2 MBytes  13.4 Mbits/sec                  receiver
+Sun Oct 25 12:00:16 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:16 2026 Server listening on 5201 (test #8)
+Sun Oct 25 12:00:16 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:19 2026 Accepted connection from 100.116.95.119, port 42568
+Sun Oct 25 12:00:19 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 42578
+Sun Oct 25 12:00:20 2026 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+Sun Oct 25 12:00:20 2026 [  6]   0.00-1.00   sec   640 KBytes  5.24 Mbits/sec    0   86.3 KBytes       
+Sun Oct 25 12:00:21 2026 [  6]   1.00-2.00   sec  1.38 MBytes  11.5 Mbits/sec    0    154 KBytes       
+Sun Oct 25 12:00:22 2026 [  6]   2.00-3.00   sec  1.38 MBytes  11.5 Mbits/sec   54    133 KBytes       
+Sun Oct 25 12:00:23 2026 [  6]   3.00-4.00   sec  1.75 MBytes  14.7 Mbits/sec    0    151 KBytes       
+Sun Oct 25 12:00:24 2026 [  6]   4.00-5.00   sec  1.88 MBytes  15.7 Mbits/sec    0    161 KBytes       
+Sun Oct 25 12:00:25 2026 [  6]   5.00-6.00   sec  1.75 MBytes  14.7 Mbits/sec    6    120 KBytes       
+Sun Oct 25 12:00:26 2026 [  6]   6.00-7.00   sec  1.62 MBytes  13.6 Mbits/sec    0    143 KBytes       
+Sun Oct 25 12:00:27 2026 [  6]   7.00-8.00   sec  1.50 MBytes  12.6 Mbits/sec   23   77.9 KBytes       
+Sun Oct 25 12:00:28 2026 [  6]   8.00-9.00   sec   896 KBytes  7.34 Mbits/sec    0   89.9 KBytes       
+Sun Oct 25 12:00:29 2026 [  6]   9.00-10.00  sec  1.25 MBytes  10.5 Mbits/sec   10   68.4 KBytes       
+Sun Oct 25 12:00:29 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 12:00:29 2026 [ ID] Interval           Transfer     Bitrate         Retr
+Sun Oct 25 12:00:29 2026 [  6]   0.00-10.09  sec  14.0 MBytes  11.6 Mbits/sec   93             sender
+Sun Oct 25 12:00:29 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:29 2026 Server listening on 5201 (test #9)
+Sun Oct 25 12:00:29 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:31 2026 Accepted connection from 100.116.95.119, port 44352
+Sun Oct 25 12:00:31 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 58816
+Sun Oct 25 12:00:32 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 12:00:32 2026 [  6]   0.00-1.00   sec  56.4 KBytes   462 Kbits/sec  3.214 ms  0/47 (0%)  
+Sun Oct 25 12:00:33 2026 [  6]   1.00-2.00   sec  61.2 KBytes   501 Kbits/sec  4.844 ms  0/51 (0%)  
+Sun Oct 25 12:00:34 2026 [  6]   2.00-3.00   sec  60.0 KBytes   491 Kbits/sec  4.057 ms  0/50 (0%)  
+Sun Oct 25 12:00:35 2026 [  6]   3.00-4.00   sec  61.2 KBytes   501 Kbits/sec  2.992 ms  0/51 (0%)  
+Sun Oct 25 12:00:36 2026 [  6]   4.00-5.00   sec  61.2 KBytes   501 Kbits/sec  4.462 ms  0/51 (0%)  
+Sun Oct 25 12:00:37 2026 [  6]   5.00-6.00   sec  61.2 KBytes   501 Kbits/sec  4.864 ms  0/51 (0%)  
+Sun Oct 25 12:00:38 2026 [  6]   6.00-7.00   sec  61.2 KBytes   501 Kbits/sec  3.553 ms  0/51 (0%)  
+Sun Oct 25 12:00:39 2026 [  6]   7.00-8.00   sec  61.2 KBytes   501 Kbits/sec  5.684 ms  0/51 (0%)  
+Sun Oct 25 12:00:40 2026 [  6]   8.00-9.00   sec  61.2 KBytes   501 Kbits/sec  4.351 ms  0/51 (0%)  
+Sun Oct 25 12:00:41 2026 [  6]   9.00-10.00  sec  61.2 KBytes   501 Kbits/sec  4.548 ms  0/51 (0%)  
+Sun Oct 25 12:00:41 2026 [  6]  10.00-10.09  sec  6.00 KBytes   541 Kbits/sec  3.841 ms  0/5 (0%)  
+Sun Oct 25 12:00:41 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 12:00:41 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 12:00:41 2026 [  6]   0.00-10.09  sec   612 KBytes   497 Kbits/sec  3.841 ms  0/510 (0%)  receiver
+Sun Oct 25 12:00:42 2026 -----------------------------------------------------------
+Sun Oct 25 12:00:42 2026 Server listening on 5201 (test #10)
+Sun Oct 25 12:00:42 2026 -----------------------------------------------------------
+Sun Oct 25 18:00:02 2026 Accepted connection from 100.116.95.119, port 37302
+Sun Oct 25 18:00:02 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 37312
+Sun Oct 25 18:00:03 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 18:00:03 2026 [  6]   0.00-1.00   sec   128 KBytes  1.05 Mbits/sec                  
+Sun Oct 25 18:00:04 2026 [  6]   1.00-2.00   sec   256 KBytes  2.10 Mbits/sec                  
+Sun Oct 25 18:00:05 2026 [  6]   2.00-3.00   sec   256 KBytes  2.10 Mbits/sec                  
+Sun Oct 25 18:00:06 2026 [  6]   3.00-4.00   sec   384 KBytes  3.14 Mbits/sec                  
+Sun Oct 25 18:00:07 2026 [  6]   4.00-5.00   sec   256 KBytes  2.10 Mbits/sec                  
+Sun Oct 25 18:00:08 2026 [  6]   5.00-6.00   sec   256 KBytes  2.10 Mbits/sec                  
+Sun Oct 25 18:00:09 2026 [  6]   6.00-7.00   sec   256 KBytes  2.10 Mbits/sec                  
+Sun Oct 25 18:00:10 2026 [  6]   7.00-8.00   sec   384 KBytes  3.15 Mbits/sec                  
+Sun Oct 25 18:00:11 2026 [  6]   8.00-9.00   sec   384 KBytes  3.15 Mbits/sec                  
+Sun Oct 25 18:00:12 2026 [  6]   9.00-10.00  sec   384 KBytes  3.14 Mbits/sec                  
+Sun Oct 25 18:00:12 2026 [  6]  10.00-10.07  sec   128 KBytes  15.4 Mbits/sec                  
+Sun Oct 25 18:00:12 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 18:00:12 2026 [ ID] Interval           Transfer     Bitrate
+Sun Oct 25 18:00:12 2026 [  6]   0.00-10.07  sec  3.00 MBytes  2.50 Mbits/sec                  receiver
+Sun Oct 25 18:00:12 2026 -----------------------------------------------------------
+Sun Oct 25 18:00:12 2026 Server listening on 5201 (test #11)
+Sun Oct 25 18:00:12 2026 -----------------------------------------------------------
+Sun Oct 25 18:00:15 2026 Accepted connection from 100.116.95.119, port 54226
+Sun Oct 25 18:00:15 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 54238
+Sun Oct 25 18:00:16 2026 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+Sun Oct 25 18:00:16 2026 [  6]   0.00-1.00   sec   256 KBytes  2.09 Mbits/sec    0   40.8 KBytes       
+Sun Oct 25 18:00:17 2026 [  6]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec    0   77.9 KBytes       
+Sun Oct 25 18:00:18 2026 [  6]   2.00-3.00   sec  1.12 MBytes  9.44 Mbits/sec   16   87.5 KBytes       
+Sun Oct 25 18:00:19 2026 [  6]   3.00-4.00   sec  1.00 MBytes  8.39 Mbits/sec    4   75.6 KBytes       
+Sun Oct 25 18:00:20 2026 [  6]   4.00-5.00   sec  1.00 MBytes  8.39 Mbits/sec    0   82.7 KBytes       
+Sun Oct 25 18:00:21 2026 [  6]   5.00-6.00   sec  1.12 MBytes  9.44 Mbits/sec    0   87.5 KBytes       
+Sun Oct 25 18:00:22 2026 [  6]   6.00-7.00   sec  1.12 MBytes  9.44 Mbits/sec    0   95.9 KBytes       
+Sun Oct 25 18:00:23 2026 [  6]   7.00-8.00   sec  1.00 MBytes  8.39 Mbits/sec    2   76.8 KBytes       
+Sun Oct 25 18:00:24 2026 [  6]   8.00-9.00   sec  1.00 MBytes  8.39 Mbits/sec    0   92.3 KBytes       
+Sun Oct 25 18:00:25 2026 [  6]   9.00-10.00  sec  1.00 MBytes  8.39 Mbits/sec    0   98.3 KBytes       
+Sun Oct 25 18:00:25 2026 [  6]  10.00-10.10  sec  0.00 Bytes  0.00 bits/sec   17   68.4 KBytes       
+Sun Oct 25 18:00:25 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 18:00:25 2026 [ ID] Interval           Transfer     Bitrate         Retr
+Sun Oct 25 18:00:25 2026 [  6]   0.00-10.10  sec  9.50 MBytes  7.89 Mbits/sec   39             sender
+Sun Oct 25 18:00:26 2026 -----------------------------------------------------------
+Sun Oct 25 18:00:26 2026 Server listening on 5201 (test #12)
+Sun Oct 25 18:00:26 2026 -----------------------------------------------------------
+Sun Oct 25 18:00:28 2026 Accepted connection from 100.116.95.119, port 36756
+Sun Oct 25 18:00:28 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 35272
+Sun Oct 25 18:00:29 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 18:00:29 2026 [  6]   0.00-1.00   sec  56.4 KBytes   462 Kbits/sec  4.136 ms  0/47 (0%)  
+Sun Oct 25 18:00:30 2026 [  6]   1.00-2.00   sec  57.6 KBytes   472 Kbits/sec  19.150 ms  0/48 (0%)  
+Sun Oct 25 18:00:31 2026 [  6]   2.00-3.00   sec  64.8 KBytes   531 Kbits/sec  26.268 ms  0/54 (0%)  
+Sun Oct 25 18:00:32 2026 [  6]   3.00-4.00   sec  60.0 KBytes   491 Kbits/sec  22.896 ms  0/50 (0%)  
+Sun Oct 25 18:00:33 2026 [  6]   4.00-5.00   sec  62.4 KBytes   511 Kbits/sec  27.551 ms  0/52 (0%)  
+Sun Oct 25 18:00:34 2026 [  6]   5.00-6.00   sec  57.6 KBytes   471 Kbits/sec  28.187 ms  0/48 (0%)  
+Sun Oct 25 18:00:35 2026 [  6]   6.00-7.00   sec  66.0 KBytes   540 Kbits/sec  22.413 ms  0/55 (0%)  
+Sun Oct 25 18:00:36 2026 [  6]   7.00-8.00   sec  60.0 KBytes   491 Kbits/sec  17.275 ms  0/50 (0%)  
+Sun Oct 25 18:00:37 2026 [  6]   8.00-9.00   sec  61.2 KBytes   501 Kbits/sec  26.523 ms  0/51 (0%)  
+Sun Oct 25 18:00:38 2026 [  6]   9.00-10.00  sec  61.2 KBytes   501 Kbits/sec  26.593 ms  0/51 (0%)  
+Sun Oct 25 18:00:38 2026 [  6]  10.00-10.07  sec  3.60 KBytes   408 Kbits/sec  23.100 ms  0/3 (0%)  
+Sun Oct 25 18:00:38 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Sun Oct 25 18:00:38 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Sun Oct 25 18:00:38 2026 [  6]   0.00-10.07  sec   610 KBytes   496 Kbits/sec  23.100 ms  0/509 (0%)  receiver

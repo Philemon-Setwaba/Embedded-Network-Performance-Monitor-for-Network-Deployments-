@@ -1,0 +1,64 @@
+== SNAPSHOT before receiver on
+Sat 24 Oct 10:16:51 UTC 2026
+booted: 2026-10-24 00:15:21
+active
+active
+active
+active
+11657151	/var/lib/vmagent/persistent-queue
+vmagent_remotewrite_packets_dropped_total{url="1:secret-url"} 0
+vmagent_remotewrite_pending_data_bytes{path="/var/lib/vmagent/persistent-queue/1_A72BAC004A27B2A6", url="1:secret-url"} 11657087
+vmagent_remotewrite_samples_dropped_total{path="/var/lib/vmagent/persistent-queue/1_A72BAC004A27B2A6",url="1:secret-url"} 0
+RECEIVER ON (busy window starts) 2026-10-24T10:45:46Z
+FIX: netmon-receiver mapped 2026-10-24T11:01:22Z
+11:01:45Z pending=11037803
+11:02:15Z pending=9118212
+11:02:45Z pending=7199278
+11:03:15Z pending=5281013
+11:03:45Z pending=3362306
+11:04:15Z pending=1444162
+11:04:45Z pending=0
+BUFFER EMPTY 2026-10-24T11:04:45Z
+DATA OFF 2026-10-24T11:25:03Z
+DATA ON 2026-10-24T11:31:16Z
+11:31:19Z pending=21570
+11:31:49Z pending=0
+BUFFER EMPTY 2026-10-24T11:31:49Z
+VOID: 11:25:03-11:31:16Z data-off attempt invalid (operator error) - repeated below
+DATA OFF 2026-10-24T11:37:37Z
+11:38:19Z internet=DOWN pending=14937
+11:38:51Z internet=DOWN pending=24410
+11:39:23Z internet=DOWN pending=33509
+11:39:56Z internet=DOWN pending=42302
+11:40:26Z internet=DOWN pending=50840
+11:40:56Z internet=DOWN pending=59369
+11:41:26Z internet=DOWN pending=67860
+11:41:56Z internet=DOWN pending=76401
+11:42:28Z internet=DOWN pending=85581
+11:43:00Z internet=DOWN pending=94525
+DATA ON 2026-10-24T11:43:44Z
+NOTE: redo outage DATA ON + drain not logged live - recover from DB (vmagent pending history)
+DATA OFF (pre-cut) 2026-10-24T11:49:44Z
+11:50:09Z pending=18284
+11:50:39Z pending=26546
+11:51:09Z pending=34859
+11:51:39Z pending=43543
+11:52:09Z pending=51994
+11:52:39Z pending=60177
+== BEFORE CUT
+12662981	/var/lib/vmagent/persistent-queue
+PULL 2026-10-24T11:53:51Z
+== AFTER BOOT
+2026-10-24 13:52:15
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+100.82.220.11   netmon-receiver
+13008549	/var/lib/vmagent/persistent-queue
+PLUGGED IN (phone time): 13:58 
+DATA ON post-cut 12:22:59
+FINAL EXPORT start 2026-10-24T12:39:17Z

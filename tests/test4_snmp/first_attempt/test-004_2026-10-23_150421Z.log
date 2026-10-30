@@ -1,0 +1,51 @@
+# test-004_2026-10-23_150421Z: iperf3 server started 2026-10-23T15:04:21+00:00 (UTC), port 5201
+Fri Oct 23 17:04:21 2026 -----------------------------------------------------------
+Fri Oct 23 17:04:21 2026 Server listening on 5201 (test #1)
+Fri Oct 23 17:04:21 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:22 2026 Accepted connection from 100.116.95.119, port 46334
+Fri Oct 23 17:06:23 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 46346
+Fri Oct 23 17:06:24 2026 iperf3: error - idle timeout for receiving data
+Fri Oct 23 17:06:24 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:24 2026 Server listening on 5201 (test #2)
+Fri Oct 23 17:06:24 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:26 2026 Accepted connection from 100.116.95.119, port 53766
+Fri Oct 23 17:06:27 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 53774
+Fri Oct 23 17:06:28 2026 [ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+Fri Oct 23 17:06:28 2026 [  6]   0.00-1.00   sec  0.00 Bytes  0.00 bits/sec    0   25.2 KBytes       
+Fri Oct 23 17:06:29 2026 [  6]   1.00-2.00   sec   128 KBytes  1.05 Mbits/sec    0   36.0 KBytes       
+Fri Oct 23 17:06:30 2026 [  6]   2.00-3.00   sec   128 KBytes  1.05 Mbits/sec    0   43.2 KBytes       
+Fri Oct 23 17:06:31 2026 [  6]   3.00-4.00   sec   256 KBytes  2.10 Mbits/sec    0   51.6 KBytes       
+Fri Oct 23 17:06:32 2026 [  6]   4.00-5.00   sec   384 KBytes  3.14 Mbits/sec    0   67.2 KBytes       
+Fri Oct 23 17:06:33 2026 [  6]   5.00-6.00   sec   384 KBytes  3.15 Mbits/sec   12   55.2 KBytes       
+Fri Oct 23 17:06:34 2026 [  6]   6.00-7.00   sec   128 KBytes  1.05 Mbits/sec    0   69.6 KBytes       
+Fri Oct 23 17:06:35 2026 [  6]   7.00-8.00   sec   256 KBytes  2.10 Mbits/sec    0   76.8 KBytes       
+Fri Oct 23 17:06:36 2026 [  6]   8.00-9.00   sec   128 KBytes  1.05 Mbits/sec    0   80.3 KBytes       
+Fri Oct 23 17:06:37 2026 [  6]   9.00-10.00  sec   128 KBytes  1.05 Mbits/sec    0   80.3 KBytes       
+Fri Oct 23 17:06:37 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Fri Oct 23 17:06:37 2026 [ ID] Interval           Transfer     Bitrate         Retr
+Fri Oct 23 17:06:37 2026 [  6]   0.00-10.06  sec  1.88 MBytes  1.56 Mbits/sec   12             sender
+Fri Oct 23 17:06:39 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:39 2026 Server listening on 5201 (test #3)
+Fri Oct 23 17:06:39 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:40 2026 Accepted connection from 100.116.95.119, port 35160
+Fri Oct 23 17:06:40 2026 [  6] local 100.82.220.11 port 5201 connected to 100.116.95.119 port 58316
+Fri Oct 23 17:06:41 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Fri Oct 23 17:06:41 2026 [  6]   0.00-1.00   sec  36.0 KBytes   295 Kbits/sec  24.216 ms  0/30 (0%)  
+Fri Oct 23 17:06:42 2026 [  6]   1.00-2.00   sec  76.8 KBytes   629 Kbits/sec  25.402 ms  0/64 (0%)  
+Fri Oct 23 17:06:44 2026 [  6]   2.00-3.00   sec  56.4 KBytes   462 Kbits/sec  20.065 ms  0/47 (0%)  
+Fri Oct 23 17:06:45 2026 [  6]   3.00-4.00   sec  62.4 KBytes   511 Kbits/sec  28.602 ms  0/52 (0%)  
+Fri Oct 23 17:06:46 2026 [  6]   4.00-5.00   sec  63.6 KBytes   520 Kbits/sec  25.352 ms  0/53 (0%)  
+Fri Oct 23 17:06:47 2026 [  6]   5.00-6.00   sec  62.4 KBytes   511 Kbits/sec  21.718 ms  0/52 (0%)  
+Fri Oct 23 17:06:48 2026 [  6]   6.00-7.00   sec  63.6 KBytes   521 Kbits/sec  22.808 ms  0/53 (0%)  
+Fri Oct 23 17:06:49 2026 [  6]   7.00-8.00   sec  60.0 KBytes   491 Kbits/sec  22.211 ms  0/50 (0%)  
+Fri Oct 23 17:06:50 2026 [  6]   8.00-9.00   sec  62.4 KBytes   511 Kbits/sec  22.156 ms  0/52 (0%)  
+Fri Oct 23 17:06:51 2026 [  6]   9.00-10.00  sec  63.6 KBytes   521 Kbits/sec  24.028 ms  0/53 (0%)  
+Fri Oct 23 17:06:51 2026 [  6]  10.00-10.17  sec  4.80 KBytes   232 Kbits/sec  25.877 ms  0/4 (0%)  
+Fri Oct 23 17:06:51 2026 - - - - - - - - - - - - - - - - - - - - - - - - -
+Fri Oct 23 17:06:51 2026 [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+Fri Oct 23 17:06:51 2026 [  6]   0.00-10.17  sec   612 KBytes   493 Kbits/sec  25.877 ms  0/510 (0%)  receiver
+Fri Oct 23 17:06:52 2026 -----------------------------------------------------------
+Fri Oct 23 17:06:52 2026 Server listening on 5201 (test #4)
+Fri Oct 23 17:06:52 2026 -----------------------------------------------------------
+Fri Oct 23 17:34:44 2026 iperf3: interrupt - the server has terminated
+# iperf3 server stopped 2026-10-23T15:34:45+00:00 (UTC)

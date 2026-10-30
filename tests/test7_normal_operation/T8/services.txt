@@ -1,0 +1,16 @@
+NRestarts=0
+Id=netmon.service
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+NRestarts=0
+Id=vmagent.service
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+NRestarts=0
+Id=victoria.service
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+
+NRestarts=0
+Id=grafana-server.service
+ActiveEnterTimestamp=Sat 2026-10-24 13:53:24 SAST
+2026-10-24 13:56:13

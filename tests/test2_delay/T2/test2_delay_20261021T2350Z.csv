@@ -1,0 +1,25 @@
+step,delay_ms,jitter_ms,start_utc,end_utc,command
+start,,,2026-10-21T23:50:31Z,,systemctl start vmagent
+start,,,2026-10-21T23:50:31Z,,systemctl start netmon
+check,,,2026-10-21T23:50:31Z,,qdisc fq_codel 0: root refcnt 2 limit 10240p flows 1024 quantum 1514 target 5ms interval 100ms memory_limit 32Mb ecn drop_batch 64 
+0,0,0,2026-10-21T23:50:31Z,2026-10-22T00:00:31Z,tc qdisc del dev wlan0 root
+check,,,2026-10-22T00:00:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 100ms seed 17231863919982087026
+1,100,0,2026-10-22T00:00:31Z,2026-10-22T00:10:31Z,tc qdisc replace dev wlan0 root netem delay 100ms
+check,,,2026-10-22T00:10:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 100ms  10ms seed 17231863919982087026
+2,100,10,2026-10-22T00:10:31Z,2026-10-22T00:20:31Z,tc qdisc replace dev wlan0 root netem delay 100ms 10ms
+check,,,2026-10-22T00:20:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 100ms  25ms seed 17231863919982087026
+3,100,25,2026-10-22T00:20:31Z,2026-10-22T00:30:31Z,tc qdisc replace dev wlan0 root netem delay 100ms 25ms
+check,,,2026-10-22T00:30:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 100ms  50ms seed 17231863919982087026
+4,100,50,2026-10-22T00:30:31Z,2026-10-22T00:40:31Z,tc qdisc replace dev wlan0 root netem delay 100ms 50ms
+check,,,2026-10-22T00:40:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 300ms seed 17231863919982087026
+5,300,0,2026-10-22T00:40:31Z,2026-10-22T00:50:31Z,tc qdisc replace dev wlan0 root netem delay 300ms
+check,,,2026-10-22T00:50:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 1s seed 17231863919982087026
+6,1000,0,2026-10-22T00:50:31Z,2026-10-22T01:00:31Z,tc qdisc replace dev wlan0 root netem delay 1000ms
+check,,,2026-10-22T01:00:31Z,,qdisc netem 8003: root refcnt 2 limit 1000 delay 2.5s seed 17231863919982087026
+7,2500,0,2026-10-22T01:00:31Z,2026-10-22T01:10:31Z,tc qdisc replace dev wlan0 root netem delay 2500ms
+check,,,2026-10-22T01:10:32Z,,qdisc fq_codel 0: root refcnt 2 limit 10240p flows 1024 quantum 1514 target 5ms interval 100ms memory_limit 32Mb ecn drop_batch 64 
+8,0,0,2026-10-22T01:10:32Z,2026-10-22T01:20:32Z,tc qdisc del dev wlan0 root
+cleanup,,,2026-10-22T01:20:32Z,,netem removed
+cleanup,,,2026-10-22T01:20:32Z,,systemctl stop netmon
+drain,,,2026-10-22T01:20:32Z,,pending_bytes=0 dropped=0 waited_s=0
+cleanup,,,2026-10-22T01:20:32Z,,systemctl stop vmagent

@@ -4,9 +4,11 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.ipynb_checkpoints/
 
-# Logs
+# Logs (the test logs in tests/ are kept)
 *.log
+!tests/**/*.log
 logs/
 
 # Environment / secrets
@@ -26,11 +28,9 @@ logs/
 build/
 dist/
 
-# Raspberry Pi / temporary files
+# Temporary and OS files
 *.swp
 *.tmp
-
-# OS files
 .DS_Store
-Thumbs.dbdata/
-data/
+Thumbs.db
+*:Zone.Identifier
