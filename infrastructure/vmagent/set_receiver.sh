@@ -4,14 +4,16 @@
 # Points the name of the remote receiver (config.json "remote.host",
 # e.g. netmon-receiver) at its current IP (config.json "remote.ip"),
 # by writing ONE line in /etc/hosts:
-#     196.42.104.92 netmon-receiver
+#     100.x.y.z netmon-receiver
+# The same line is written to the cloud-init template
+# (/etc/cloud/templates/hosts.debian.tmpl), because Raspberry Pi OS rebuilds
+# /etc/hosts from it at every boot and would otherwise remove the entry.
 #
 # Use it when the laptop's IP changes:
 #   1. edit "ip" under "remote" in config.json
 #   2. sudo bash infrastructure/vmagent/set_receiver.sh
 # vmagent does not need a restart: the URL (the name) stays the same, so
 # data waiting in its buffer is sent to the new IP.
-# (Whether vmagent picks up the new IP without a restart is still TO BE TESTED.)
 #
 # install.sh also runs this script.
 
@@ -46,6 +48,14 @@ EOF
 # (Only lines that END with the name are removed.)
 sed -i "/[[:space:]]${HOST}\$/d" /etc/hosts
 echo "${IP} ${HOST}" >> /etc/hosts
+
+# Same line in the cloud-init template, so it survives a reboot.
+TEMPLATE=/etc/cloud/templates/hosts.debian.tmpl
+if [[ -f "$TEMPLATE" ]]; then
+  sed -i "/[[:space:]]${HOST}\$/d" "$TEMPLATE"
+  echo "${IP} ${HOST}" >> "$TEMPLATE"
+  echo "Also written to $TEMPLATE"
+fi
 
 echo "/etc/hosts now has:"
 grep -E "[[:space:]]${HOST}\$" /etc/hosts
