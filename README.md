@@ -104,7 +104,7 @@ Tailscale 1.104.1, iperf 3.16 on the receiver.
 | `infrastructure/grafana/` | Dashboard (`network-monitor.json`), provisioning files and install script |
 | `scripts/laptop_services.py` | Starts, stops and checks the receiver services (VictoriaMetrics, iperf3 server, Grafana); used for all tests and for normal running |
 | `scripts/run_iperf_server.sh` | Plain iperf3 server, used only during early development |
-| `scripts/` (other) | The timing and buffer-sizing scripts |
+| `tests/test3_receiver_outage/test3_analysis.ipynb` | Also derives the buffer size: the least-squares fit of the buffer growth (0.967 MB/h) behind the 9 GB limit. The scheduler intervals are justified in Section 3.4.2 of the report |
 | `tests/` | One folder per test: the script that ran it, its logs and exports, the analysis notebook and the figures |
 | `docs/dashboard/` | Screenshots of every dashboard tab |
 | `hardware/enclosure/` | Fusion 360 design of the enclosure |
