@@ -94,20 +94,21 @@ Tailscale 1.104.1, iperf 3.16 on the receiver.
 | Path | Contents |
 | --- | --- |
 | `config.json` | All site settings: targets, intervals, router, receiver |
+| `src/` | The monitor program. See [`src/README.md`](src/README.md) |
 | `src/scheduler.py` | The two-lane scheduler (started as `python3 -m src.scheduler`) |
 | `src/jobs/` | One job per measurement, plus `state.py` (backhaul state logic) |
 | `src/measurement/` | Wrappers around ping, TCP, traceroute, iperf3, SNMP, Wi-Fi and health |
-| `src/reporting/` | Converts results to line protocol and pushes them to VictoriaMetrics and vmagent |
+| `src/reporting/` | Converts results to metric lines and pushes them to VictoriaMetrics and vmagent |
+| `infrastructure/` | Install scripts and service files for the four services. See [`infrastructure/README.md`](infrastructure/README.md) |
 | `infrastructure/victoria/` | VictoriaMetrics install script and service |
 | `infrastructure/vmagent/` | vmagent install script, service and `set_receiver.sh` |
 | `infrastructure/netmon/` | Service and install script for the monitor program |
 | `infrastructure/grafana/` | Dashboard (`network-monitor.json`), provisioning files and install script |
-| `scripts/laptop_services.py` | Starts, stops and checks the receiver services (VictoriaMetrics, iperf3 server, Grafana); used for all tests and for normal running |
-| `scripts/run_iperf_server.sh` | Plain iperf3 server, used only during early development |
+| `scripts/` | Receiver scripts: `laptop_services.py` (used for all tests and for normal running) and `run_iperf_server.sh` (early development only). See [`scripts/README.md`](scripts/README.md) |
+| `tests/` | One folder per test: its script (Tests 1–5; Tests 6 and 7 were run by hand), logs, database exports, analysis notebook and figures. See [`tests/README.md`](tests/README.md) |
 | `tests/test3_receiver_outage/test3_analysis.ipynb` | Also derives the buffer size: the least-squares fit of the buffer growth (0.967 MB/h) behind the 9 GB limit. The scheduler intervals are justified in Section 3.4.2 of the report |
-| `tests/` | One folder per test: the script that ran it, its logs and exports, the analysis notebook and the figures |
-| `docs/dashboard/` | Screenshots of every dashboard tab |
-| `hardware/enclosure/` | Fusion 360 design of the enclosure |
+| `docs/dashboard/` | Screenshots of every dashboard tab. See [`docs/dashboard/README.md`](docs/dashboard/README.md) |
+| `hardware/enclosure/` | Fusion 360 design, STL files and drawings of the enclosure. See [`hardware/enclosure/README.md`](hardware/enclosure/README.md) |
 
 ## Installing the monitor (Raspberry Pi)
 
@@ -151,11 +152,16 @@ the interface names or the targets only if your site differs.
 
 **5. Install VictoriaMetrics (local database)**
 
+The install script downloads VictoriaMetrics v1.153.0 itself:
+
 ```bash
 sudo bash infrastructure/victoria/install.sh
 ```
 
 **6. Install vmagent (store-and-forward)**
+
+The install script expects vmagent at `/usr/local/bin/vmagent`, so download it
+first:
 
 ```bash
 cd /tmp
@@ -185,9 +191,14 @@ sudo bash infrastructure/netmon/install.sh
 
 **8. Install the dashboard**
 
-Install Grafana OSS for arm64 (the `.deb` from grafana.com), then:
+Install Grafana from Grafana's package repository, then load the dashboard:
 
 ```bash
+sudo mkdir -p /etc/apt/keyrings
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+sudo apt update && sudo apt install -y grafana
+sudo systemctl enable --now grafana-server
 sudo bash infrastructure/grafana/install.sh
 ```
 
@@ -261,8 +272,9 @@ Raspberry Pi Connect.
 ## Tests and results
 
 All tests ran on the real LTE backhaul (Mercusys MB135-4G, Vodacom). Each
-folder holds the script that ran the test, its logs and database exports, the
-analysis notebook and the figures used in the report.
+folder holds the logs and database exports, the analysis notebook and the
+figures used in the report, and, for Tests 1–5, the script that ran the test.
+See [`tests/README.md`](tests/README.md) for the folder layout.
 
 | Folder | Test | What was done | Main result |
 | --- | --- | --- | --- |
@@ -271,7 +283,7 @@ analysis notebook and the figures used in the report.
 | `tests/test3_receiver_outage/` | 3: Receiver outage | Receiver off for 10 h | All 273,305 samples delivered; buffer lasts about 388 days |
 | `tests/test4_snmp/` | 4: SNMP traffic | iperf3 upload and download through the LTE link | SNMP followed every transfer, 14–20 % above iperf3 |
 | `tests/test5_backhaul_outage/` | 5: Backhaul outage | Mobile data off for 10 and 45 min | Detected in 16–17 s; all samples delivered |
-| `tests/test6_power_cut/` | 6: Long run and power cut | Receiver off overnight, two outages, power cut | Services back 69 s after boot; buffer kept |
+| `tests/test6_power_cut/` | 6: Long run and power cut | Receiver off overnight, two outages, power cut | Services back 69 s after boot; buffer kept; 65 samples lost at the power cut |
 | `tests/test7_normal_operation/` | 7: Normal operation | 30.5 h unattended | No false alarm; passive jobs 100 % complete; CPU 0.6 % |
 
 `tests/count.sh` compares the number of samples on the Pi and on the receiver
@@ -287,8 +299,10 @@ The full method and analysis are in the project report (Chapters 3 and 4).
 
 The monitor is housed in a two-part box designed in Autodesk Fusion 360: a
 base that holds the Pi and the Touch Display 2, and a roof that clips on with
-snap fits, so the box opens without tools. The full design, with all
-dimensions, is in `hardware/enclosure/`.
+snap fits, so the box opens without tools. The design file, STL files, main
+dimensions and print settings are in
+[`hardware/enclosure/`](hardware/enclosure/README.md). The enclosure design is
+licensed under CC BY-NC 4.0.
 
 ## Known limitations
 
