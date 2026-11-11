@@ -17,6 +17,9 @@ you made changes. For example:
 
 For commercial use, contact the author.
 
+The two images in `reference/` are not part of this design: they are from
+Raspberry Pi Ltd and are **not** covered by the CC BY-NC 4.0 licence.
+
 
 
 # Enclosure
@@ -54,6 +57,8 @@ The dimensioned sketches are in `images/base_dimensions.png` and
 | `images/base_dimensions.png`, `images/roof_dimensions.png` | Dimensioned sketches |
 | `images/printed_*.jpeg` | Photos of the printed box with the screen running the dashboard |
 | `images/slicer_printer.png`, `images/slicer_filament.png` | Printer and filament settings used |
+| `reference/touch_display_2.webp` | Product photo of the Raspberry Pi Touch Display 2 (Raspberry Pi Ltd) |
+| `reference/touch_display_2_mechanical.jpg` | Mechanical drawing of the Touch Display 2, in mm (Raspberry Pi Ltd) |
 
 ## Printing
 
@@ -75,3 +80,20 @@ The dimensioned sketches are in `images/base_dimensions.png` and
 3. Connect the power cable (and the network cable, if used) through the
    openings in the side walls.
 4. Press the roof onto the base until it clicks into place.
+
+## Reference: Raspberry Pi Touch Display 2
+
+The enclosure was sized around the Raspberry Pi Touch Display 2 (7-inch), with
+the Raspberry Pi 5 mounted on its back. Its outer size is 120.2 × 189.3 mm, so
+the roof frame (121 × 190.5 mm) fits around it with a small clearance.
+
+![Raspberry Pi Touch Display 2](reference/touch_display_2.webp)
+
+![Mechanical drawing of the Touch Display 2 (mm)](reference/touch_display_2_mechanical.jpg)
+
+**Source and copyright.** Both images are from Raspberry Pi Ltd: the product
+photo, and the mechanical drawing from the
+[Raspberry Pi Touch Display 2 – 7″ Portrait](https://pip-assets.raspberrypi.com/categories/1083-raspberry-pi-touch-display-2/documents/RP-010429-MM-3-touch-display-2-7-inch-product-brief.pdf)
+product brief (Raspberry Pi Ltd, October 2026). They are included for
+reference only and are **not** covered by the CC BY-NC 4.0 licence of this
+folder.
